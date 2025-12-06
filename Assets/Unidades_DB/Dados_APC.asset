@@ -16,5 +16,16 @@ MonoBehaviour:
   spriteDefault: {fileID: 21300000, guid: eb47016b4b81a574eb99e655c0ae0803, type: 3}
   spriteGreen: {fileID: 0}
   spriteRed: {fileID: 0}
+  spriteBlue: {fileID: 0}
+  spriteYellow: {fileID: 0}
   unitType: 1
   moveRange: 6
+  maxHP: 10
+  defense: 8
+  weapons:
+  - weaponName: Roof Gun
+    icon: {fileID: 0}
+    attackPower: 6
+    minRange: 1
+    maxRange: 1
+    squadAttacks: 8

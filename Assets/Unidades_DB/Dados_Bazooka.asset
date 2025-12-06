@@ -16,5 +16,16 @@ MonoBehaviour:
   spriteDefault: {fileID: 21300000, guid: 5fe376938140a9a4180ef4bad9915343, type: 3}
   spriteGreen: {fileID: 0}
   spriteRed: {fileID: 0}
+  spriteBlue: {fileID: 0}
+  spriteYellow: {fileID: 0}
   unitType: 0
   moveRange: 2
+  maxHP: 10
+  defense: 8
+  weapons:
+  - weaponName: LAW
+    icon: {fileID: 0}
+    attackPower: 7
+    minRange: 1
+    maxRange: 1
+    squadAttacks: 3

@@ -16,5 +16,22 @@ MonoBehaviour:
   spriteDefault: {fileID: 21300000, guid: 7a4e98efb59da8447b1de4d056a57e79, type: 3}
   spriteGreen: {fileID: 0}
   spriteRed: {fileID: 0}
+  spriteBlue: {fileID: 0}
+  spriteYellow: {fileID: 0}
   unitType: 0
   moveRange: 3
+  maxHP: 10
+  defense: 8
+  weapons:
+  - weaponName: Rifle
+    icon: {fileID: 0}
+    attackPower: 4
+    minRange: 1
+    maxRange: 1
+    squadAttacks: 9
+  - weaponName: Grenade
+    icon: {fileID: 0}
+    attackPower: 5
+    minRange: 2
+    maxRange: 2
+    squadAttacks: 2

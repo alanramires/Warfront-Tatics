@@ -8,6 +8,15 @@ public class UnitMovement : MonoBehaviour
     [Header("DADOS DA UNIDADE (A FICHA)")]
     public UnitData data; // <--- VARIÁVEL NECESSÁRIA ADICIONADA AQUI
 
+    [Header("Interface")]
+    public UnitHUD hud; // <--- Arraste o Canvas/Script aqui depois
+
+    [Header("Estado de Combate (Runtime)")]
+    public int currentHP;        // Quantos soldados restam
+    
+    // Lista de armas DESTE soldado específico (com munição gasta individualmente)
+    public List<WeaponConfig> myWeapons = new List<WeaponConfig>();
+
     [Header("Configurações de Time")]
     public int teamId = 0; 
 
@@ -40,8 +49,11 @@ public class UnitMovement : MonoBehaviour
 
     void Start()
     {
-        // 1. AUTO-CONEXÃO
+        // ---------------------------------------------------------
+        // 1. AUTO-CONEXÃO (Busca referências necessárias)
+        // ---------------------------------------------------------
         if (boardCursor == null) boardCursor = FindFirstObjectByType<CursorController>();
+        spriteRenderer = GetComponent<SpriteRenderer>(); 
 
         if (rangeTilemap == null)
         {
@@ -49,12 +61,12 @@ public class UnitMovement : MonoBehaviour
             if (mapObj != null) rangeTilemap = mapObj.GetComponent<Tilemap>();
         }
 
-        spriteRenderer = GetComponent<SpriteRenderer>(); 
-
-        // 2. LÓGICA DE 4 TIMES (INTEGRAÇÃO COM DATA)
+        // ---------------------------------------------------------
+        // 2. CONFIGURAÇÃO BASEADA NA FICHA (DATA)
+        // ---------------------------------------------------------
         if (data != null)
         {
-            // A. Define a Cor e o Flip
+            // --- A. CONFIGURAÇÃO VISUAL (SKIN & COR) ---
             Color teamColor = Color.white;
             Sprite specificSkin = null;
 
@@ -67,26 +79,54 @@ public class UnitMovement : MonoBehaviour
                 default: teamColor = Color.white; break;
             }
 
-            // B. Aplica o Sprite (Específico ou Padrão)
+            // Define o Sprite (Específico ou Padrão)
             if (specificSkin != null) spriteRenderer.sprite = specificSkin;
             else spriteRenderer.sprite = data.spriteDefault;
 
-            // C. Aplica a Tinta e o Flip
+            // Define a Tinta
             spriteRenderer.color = teamColor;
-            if (teamId == 1 || teamId == 3) spriteRenderer.flipX = true; // 1 e 3 olham pra esquerda
+            
+            // Define o Flip (Direção do olhar)
+            if (teamId == 1 || teamId == 3) spriteRenderer.flipX = true; // 1 e 3 olham p/ esquerda
             else spriteRenderer.flipX = false;
+
+            // --- B. DADOS DE COMBATE (HP & ARSENAL) ---
+            
+            // Inicializa HP do Esquadrão
+            currentHP = data.maxHP;
+
+            // Inicializa o Arsenal (Copia da ficha para a memória da unidade)
+            myWeapons.Clear();
+            foreach (var w in data.weapons)
+            {
+                myWeapons.Add(w); 
+                // Importante: Adicionamos uma cópia. Gastar munição aqui não altera o UnitData original.
+            }
+
+            // LIGA O HUD
+            if (hud != null)
+            {
+                hud.UpdateHP(currentHP);       
+                hud.SetupWeapons(myWeapons);   
+                
+                // --- NOVO: PASSA A TINTA PRO HUD ---
+                // Usa a mesma cor que pintou o soldado (spriteRenderer.color)
+                hud.SetTeamColor(spriteRenderer.color); 
+            }
         }
+        else
+        {
+            Debug.LogError($"ERRO CRÍTICO: Unidade {name} não tem Ficha de Dados (UnitData) atribuída!");
+        }
+
+        // ---------------------------------------------------------
+        // 3. FINALIZAÇÃO DE ESTADO
+        // ---------------------------------------------------------
+        originalColor = spriteRenderer.color; // Salva a cor final para o efeito de piscar
         
-        // --- CÓDIGO DE COR ORIGINAL DO BACKUP (Removido por ser redundante) ---
-        // if (teamId == 0) { spriteRenderer.color = Color.green; spriteRenderer.flipX = false; }
-        // else { spriteRenderer.color = Color.red; spriteRenderer.flipX = true; }
-        // ------------------------------------------------------------------------
-
-        originalColor = spriteRenderer.color; // Captura a cor final (com a tinta)
-
         if (lockIcon != null) lockIcon.SetActive(false);
 
-        // 3. POSICIONAMENTO
+        // 4. ALINHAMENTO NO GRID
         if (boardCursor != null && boardCursor.mainGrid != null)
         {
             Vector3 worldPos = boardCursor.mainGrid.CellToWorld(currentCell);
@@ -94,7 +134,6 @@ public class UnitMovement : MonoBehaviour
             transform.position = worldPos;
         }
     }
-
     public void TryToggleSelection(Vector3Int cursorPosition)
     {
         if (isMoving || isFinished) return; 
