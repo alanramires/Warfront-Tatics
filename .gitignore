@@ -1,0 +1,14 @@
+# Unity Files and folders to ignore
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+# Visual Studio/Code files
+/.vs/
+*.csproj
+*.sln
+# Unity specific files
+*.unityproj
+Assets/AssetStoreTools
