@@ -11,6 +11,9 @@ public class UnitMovement : MonoBehaviour
     [Header("Interface")]
     public UnitHUD hud; // <--- Arraste o Canvas/Script aqui depois
 
+    [Header("Sistema de Combate")]
+    public GameObject masterProjectilePrefab;
+
     [Header("Estado de Combate (Runtime)")]
     public int currentHP;        // Quantos soldados restam
     
@@ -37,8 +40,10 @@ public class UnitMovement : MonoBehaviour
     private bool isSelected = false; 
     private bool isMoving = false; 
     private bool isPreMoved = false; 
-    private bool isFinished = false; 
-    
+
+    [Header("Estado do Turno")]
+    public bool isFinished = false; // Agora aparece no Inspector como um checkbox!
+        
     private Vector3Int posicaoOriginal; 
     private SpriteRenderer spriteRenderer;
     private Color originalColor; 
@@ -109,15 +114,18 @@ public class UnitMovement : MonoBehaviour
                 hud.UpdateHP(currentHP);       
                 hud.SetupWeapons(myWeapons);   
                 
-                // --- NOVO: PASSA A TINTA PRO HUD ---
-                // Usa a mesma cor que pintou o soldado (spriteRenderer.color)
-                hud.SetTeamColor(spriteRenderer.color); 
+                // --- ATUALIZAÇÃO AQUI ---
+                // Antes era: hud.SetTeamColor(spriteRenderer.color);
+                // Agora passamos o ID também:
+                hud.SetVisuals(teamId, spriteRenderer.color); 
             }
         }
         else
         {
             Debug.LogError($"ERRO CRÍTICO: Unidade {name} não tem Ficha de Dados (UnitData) atribuída!");
         }
+
+       
 
         // ---------------------------------------------------------
         // 3. FINALIZAÇÃO DE ESTADO
@@ -134,11 +142,50 @@ public class UnitMovement : MonoBehaviour
             transform.position = worldPos;
         }
     }
+
+     // --- NOVO: SINCRONIA EM TEMPO REAL (GOD MODE) ---
+        void Update()
+        {
+            // Isso garante que se você mexer no Inspector, o HUD obedece na hora!
+            if (hud != null)
+            {
+                hud.SetLockState(isFinished); // Atualiza o Cadeado
+                hud.UpdateHP(currentHP);      // Atualiza o HP
+            }
+        }
     public void TryToggleSelection(Vector3Int cursorPosition)
     {
-        if (isMoving || isFinished) return; 
+        if (isMoving) return; 
 
-        // 1. SELEÇÃO INICIAL
+        // ---------------------------------------------------------------
+        // 1. O FIX DO TRAVAMENTO (Unidade Já Agiu)
+        // ---------------------------------------------------------------
+        if (isFinished)
+        {
+            // Se o clique foi EXATAMENTE nesta unidade travada
+            if (cursorPosition == currentCell)
+            {
+                Debug.Log("Unidade já agiu. Cursor liberado.");
+                
+                if (boardCursor)
+                {
+                    // Toca o som de "negado" (opcional)
+                    boardCursor.PlayError(); 
+                    
+                    // --- O PULO DO GATO ---
+                    // Força o cursor a esquecer essa unidade imediatamente.
+                    // Isso impede que ele fique "preso" esperando movimento.
+                    boardCursor.ClearSelection(); 
+                }
+            }
+            return; // Aborta e não deixa selecionar para andar
+        }
+
+        // ---------------------------------------------------------------
+        // 2. LÓGICA DE MOVIMENTO NORMAL (Se não estiver finished)
+        // ---------------------------------------------------------------
+
+        // A. SELEÇÃO INICIAL (Primeiro clique)
         if (!isSelected && !isPreMoved)
         {
             if (cursorPosition == currentCell)
@@ -156,37 +203,35 @@ public class UnitMovement : MonoBehaviour
             return;
         }
 
-        // 2. CONFIRMAÇÃO FINAL
+        // B. CONFIRMAÇÃO (Segundo clique no mesmo lugar)
         if (isPreMoved)
         {
             ConfirmMove(); 
             return;
         }
 
-        // 3. INICIA MOVIMENTO
+        // C. TENTATIVA DE MOVIMENTO (Clicou num quadrado azul ou fora)
         if (isSelected && !isPreMoved)
         {
+            // Clicou nela mesma para esperar
             if (cursorPosition == currentCell) 
             {
                 if (boardCursor) boardCursor.PlaySFX(boardCursor.sfxConfirm);
                 isPreMoved = true;
                 if (boardCursor) boardCursor.LockMovement(new List<Vector3Int> { currentCell });
             }
+            // Clicou num quadrado válido
             else if (validMoveTiles.Contains(cursorPosition)) 
             {
-                // 1. Determina qual som de unidade tocar
                 AudioClip moveClip = (data.unitType == UnitType.Infantry) ? boardCursor.sfxMarch : boardCursor.sfxVehicle;
-
-                // 2. Toca o som da UNIDADE (Marcha/Veículo) em vez do som genérico de UI
                 if (boardCursor) boardCursor.PlaySFX(moveClip); 
                 
-                // 3. Inicia o movimento
                 StartCoroutine(MoveRoutine(cursorPosition));
             }
+            // Clicou fora (Cancelamento)
             else
             {
-                if (boardCursor) boardCursor.PlayError(); 
-                Debug.Log("Destino Inválido.");
+                CancelSelectionComplete(); // Solta a unidade
             }
         }
     }
@@ -202,7 +247,9 @@ public class UnitMovement : MonoBehaviour
     {
         isFinished = false;
         spriteRenderer.color = originalColor;
-        if (lockIcon != null) lockIcon.SetActive(false);
+        
+        // DESLIGA O CADEADO
+        if (hud != null) hud.SetLockState(false); // <--- AQUI
     }
 
     HashSet<Vector3Int> GetMovementBlockers()
@@ -303,11 +350,17 @@ public class UnitMovement : MonoBehaviour
     {
         isSelected = false;
         isPreMoved = false;
+        isFinished = true; // Marca que já agiu
         
-        StopAllCoroutines();
-        
-        spriteRenderer.color = originalColor; 
-        if (lockIcon != null) lockIcon.SetActive(false);
+        StopAllCoroutines();     
+
+        // --- A CORREÇÃO DO FANTASMA TÁ AQUI ---
+        // Força a cor voltar ao normal (visível) caso tenha parado no meio do pisca
+        spriteRenderer.color = originalColor;
+
+        // --- AQUI É O GATILHO ---
+        // Só liga o cadeado no momento que confirma o movimento
+        if (hud != null) hud.SetLockState(true);   
 
         ClearRange(); 
         
