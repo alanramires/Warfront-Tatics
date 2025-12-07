@@ -21,6 +21,7 @@ public class UnitData : ScriptableObject
     [Header("Estatísticas do Esquadrão")]
     public int maxHP = 10;        // "Unidades Iniciais" (Soldados vivos)
     public int defense = 8;       // "Defesa do Conjunto" (Fixo)
+    public int maxFuel = 70; // Tanque cheio (Padrão: 70)
 
     [Header("Armamento (Arsenal)")]
     public List<WeaponConfig> weapons; // Lista flexível (pode ter 1, 2 ou mais armas)

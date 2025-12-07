@@ -22,10 +22,9 @@ MonoBehaviour:
   moveRange: 4
   maxHP: 10
   defense: 8
+  maxFuel: 30
   weapons:
-  - weaponName: Granada
-    icon: {fileID: 0}
-    attackPower: 6
+  - data: {fileID: 0}
+    squadAttacks: 4
     minRange: 2
     maxRange: 3
-    squadAttacks: 4

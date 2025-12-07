@@ -11,10 +11,50 @@ public class UnitHUD : MonoBehaviour
     
     // MUDANÇA 1: Agora é do tipo Image, para podermos pintar
     public Image lockIcon; 
+
+    // --- NOVO: A BARRA DE COMBUSTÍVEL ---
+    [Header("Combustível")]
+    public Image fuelFillImage; // Arraste o "FuelBar_Fill" aqui
+    public TextMeshProUGUI fuelText; // <--- NOVO: Arraste o texto aqui
+
+    // --- NOVO: PALETA DE CORES ---
+    [Header("Configuração de Cores")]
+    public Color fuelSafeColor = new Color(0.0f, 0.5f, 0.0f); // Verde Escuro padrão
+    public Color fuelDangerColor = Color.red;
     
     [Header("Armas (Opcional por enquanto)")]
     public Transform weaponContainer;    
     public GameObject weaponSlotPrefab;  
+
+    // --- NOVO: ATUALIZA A BARRA ---
+    public void UpdateFuel(int current, int max)
+    {
+        if (fuelFillImage != null)
+        {
+            // O ERRO PROVAVELMENTE ESTÁ AQUI:
+            // Errado: float pct = current / max;  <-- Dá 0
+            
+            // Certo: Tem que ter (float) antes
+            float pct = (float)current / max; 
+            Debug.Log($"Gasolina: {current}/{max} = {pct}"); // <--- OLHE O CONSOLE
+
+            fuelFillImage.fillAmount = pct; // Atualiza a barra
+
+            // Muda a cor
+            if (pct <= 0.2f) fuelFillImage.color = fuelDangerColor;
+            else fuelFillImage.color = fuelSafeColor;
+
+            // --- ATUALIZA O TEXTO ---
+            if (fuelText != null)
+            {
+                // Opção A: Mostra "14/70" (Mais preciso)
+                fuelText.text = $"{current}/{max}";
+
+                // Opção B: Mostra só o atual "14" (Mais limpo, se o max não importar tanto)
+                // fuelText.text = current.ToString();
+            }
+        }
+    }
 
     // Configura Visual Completo (Cores e Fontes)
     public void SetVisuals(int teamId, Color teamColor)

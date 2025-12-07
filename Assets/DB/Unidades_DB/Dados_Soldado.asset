@@ -22,16 +22,13 @@ MonoBehaviour:
   moveRange: 3
   maxHP: 10
   defense: 8
+  maxFuel: 99
   weapons:
-  - weaponName: Rifle
-    icon: {fileID: 0}
-    attackPower: 4
+  - data: {fileID: 0}
+    squadAttacks: 9
     minRange: 1
     maxRange: 1
-    squadAttacks: 9
-  - weaponName: Grenade
-    icon: {fileID: 0}
-    attackPower: 5
+  - data: {fileID: 0}
+    squadAttacks: 2
     minRange: 2
     maxRange: 2
-    squadAttacks: 2

@@ -11,6 +11,10 @@ public class UnitMovement : MonoBehaviour
     [Header("Interface")]
     public UnitHUD hud; // <--- Arraste o Canvas/Script aqui depois
 
+    [Header("Combustível")]
+    public int currentFuel;
+    private int pendingCost = 0; // Quanto gastou neste movimento (ainda não confirmado)
+
     [Header("Sistema de Combate")]
     public GameObject masterProjectilePrefab;
 
@@ -74,6 +78,8 @@ public class UnitMovement : MonoBehaviour
             // --- A. CONFIGURAÇÃO VISUAL (SKIN & COR) ---
             Color teamColor = Color.white;
             Sprite specificSkin = null;
+            // INICIALIZA O TANQUE
+            currentFuel = data.maxFuel;
 
             switch (teamId)
             {
@@ -112,12 +118,12 @@ public class UnitMovement : MonoBehaviour
             if (hud != null)
             {
                 hud.UpdateHP(currentHP);       
-                hud.SetupWeapons(myWeapons);   
-                
-                // --- ATUALIZAÇÃO AQUI ---
-                // Antes era: hud.SetTeamColor(spriteRenderer.color);
-                // Agora passamos o ID também:
-                hud.SetVisuals(teamId, spriteRenderer.color); 
+                hud.SetupWeapons(myWeapons);  
+                hud.SetVisuals(teamId, spriteRenderer.color);  
+                // ATUALIZA A BARRA INICIAL
+                hud.UpdateFuel(currentFuel, data.maxFuel);
+
+               
             }
         }
         else
@@ -151,6 +157,7 @@ public class UnitMovement : MonoBehaviour
             {
                 hud.SetLockState(isFinished); // Atualiza o Cadeado
                 hud.UpdateHP(currentHP);      // Atualiza o HP
+                if (data != null) hud.UpdateFuel(currentFuel, data.maxFuel);
             }
         }
     public void TryToggleSelection(Vector3Int cursorPosition)
@@ -287,8 +294,26 @@ public class UnitMovement : MonoBehaviour
         // INTEGRAÇÃO: Lê os dados da ficha
         int range = data != null ? data.moveRange : 3;
         UnitType type = data != null ? data.unitType : UnitType.Infantry;
-
         List<Vector3Int> path = Pathfinding.GetPathTo(currentCell, destination, range, GetMovementBlockers(), type);
+
+        // --- CÁLCULO DE CUSTO USANDO SEU MANAGER ---
+        pendingCost = 0;
+        
+        foreach (Vector3Int tilePos in path)
+        {
+            if (tilePos == currentCell) continue; // Não paga para ficar parado
+
+            // Chama o SEU TerrainManager (que já tem a lógica de Forest=2, Mountain=6)
+            if (TerrainManager.Instance != null)
+            {
+                pendingCost += TerrainManager.Instance.GetMovementCost(tilePos, type);
+            }
+            else
+            {
+                // Fallback de segurança (se esqueceu de criar o manager na cena)
+                pendingCost += 1; 
+            }
+        }
 
         for (int i = 1; i < path.Count; i++)
         {
@@ -348,18 +373,34 @@ public class UnitMovement : MonoBehaviour
 
     void ConfirmMove()
     {
+        // --- 1. COBRANÇA DO COMBUSTÍVEL (ISSO QUE FALTA) ---
+        if (pendingCost > 0)
+        {
+            currentFuel -= pendingCost; // Desconta do tanque
+            if (currentFuel < 0) currentFuel = 0; // Não deixa negativo
+            
+            // Chama o HUD para atualizar a barra
+            if (hud != null && data != null)
+            {
+                hud.UpdateFuel(currentFuel, data.maxFuel);
+            }
+
+            Debug.Log($"Pagou gasolina: {pendingCost}. Sobrou: {currentFuel}");
+            
+            pendingCost = 0; // Zera a conta pra não cobrar 2x
+        }
+
+        // 2. FINALIZAÇÃO DO TURNO
         isSelected = false;
         isPreMoved = false;
         isFinished = true; // Marca que já agiu
         
         StopAllCoroutines();     
 
-        // --- A CORREÇÃO DO FANTASMA TÁ AQUI ---
-        // Força a cor voltar ao normal (visível) caso tenha parado no meio do pisca
-        spriteRenderer.color = originalColor;
+        // Fix do Fantasma (Garante visibilidade)
+        if (spriteRenderer != null) spriteRenderer.color = originalColor;
 
-        // --- AQUI É O GATILHO ---
-        // Só liga o cadeado no momento que confirma o movimento
+        // Liga o cadeado
         if (hud != null) hud.SetLockState(true);   
 
         ClearRange(); 
@@ -369,8 +410,7 @@ public class UnitMovement : MonoBehaviour
             boardCursor.PlaySFX(boardCursor.sfxDone); 
             boardCursor.ClearSelection(); 
         }
-
-        Debug.Log("Movimento Concluído.");
+        Debug.Log("Movimento Concluido");
     }
 
     void CancelSelectionComplete()

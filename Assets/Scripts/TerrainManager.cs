@@ -57,7 +57,7 @@ public class TerrainManager : MonoBehaviour
         // --- CLASSIFICAÇÃO DA UNIDADE ---
         bool isAir = (unitType == UnitType.JetFighter || unitType == UnitType.Helicopter || unitType == UnitType.Plane);
         bool isSea = (unitType == UnitType.Ship || unitType == UnitType.Sub);
-        bool isInfantry = (unitType == UnitType.Infantry || unitType == UnitType.Artillery);
+        bool isInfantry = (unitType == UnitType.Infantry);
         // --------------------------------
 
         switch (terrain)
