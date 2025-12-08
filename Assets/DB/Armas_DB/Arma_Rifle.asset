@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Arma_Rifle
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Rifle
-  icon: {fileID: 8333481726314500824, guid: 725fc1f38ef986344ba9e0e48ba51b02, type: 3}
+  icon: {fileID: 21300000, guid: 725fc1f38ef986344ba9e0e48ba51b02, type: 3}
   projectileSprite: {fileID: 21300000, guid: a993bf2ba4691474485ad2c3d951ab1b, type: 3}
   trajectory: 0
   projectileSpeed: 20

@@ -83,11 +83,26 @@ public class UnitMovement : MonoBehaviour
 
             switch (teamId)
             {
-                case 0: teamColor = Color.green; specificSkin = data.spriteGreen; break;
-                case 1: teamColor = Color.red; specificSkin = data.spriteRed; break;
-                case 2: teamColor = Color.blue; specificSkin = data.spriteBlue; break;    
-                case 3: teamColor = Color.yellow; specificSkin = data.spriteYellow; break;  
-                default: teamColor = Color.white; break;
+                // MUDANÇA AQUI: Usando as novas cores suaves
+                case 0: 
+                    teamColor = GameColors.TeamGreen; 
+                    specificSkin = data.spriteGreen; 
+                    break;
+                case 1: 
+                    teamColor = GameColors.TeamRed; 
+                    specificSkin = data.spriteRed; 
+                    break;
+                case 2: 
+                    teamColor = GameColors.TeamBlue; 
+                    specificSkin = data.spriteBlue; 
+                    break;    
+                case 3: 
+                    teamColor = GameColors.TeamYellow; 
+                    specificSkin = data.spriteYellow; 
+                    break;  
+                default: 
+                    teamColor = Color.white; 
+                    break;
             }
 
             // Define o Sprite (Específico ou Padrão)

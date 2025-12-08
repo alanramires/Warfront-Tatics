@@ -24,11 +24,7 @@ MonoBehaviour:
   defense: 8
   maxFuel: 99
   weapons:
-  - data: {fileID: 0}
+  - data: {fileID: 11400000, guid: 1a4c9cd602ef00c4fbdd5435ddb7659e, type: 2}
     squadAttacks: 9
     minRange: 1
     maxRange: 1
-  - data: {fileID: 0}
-    squadAttacks: 2
-    minRange: 2
-    maxRange: 2

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Arma_Roofgun
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Roof Gun
-  icon: {fileID: -6488280599649630198, guid: fb825b559e8e22c4096725b8e2374174, type: 3}
+  icon: {fileID: 21300000, guid: fb825b559e8e22c4096725b8e2374174, type: 3}
   projectileSprite: {fileID: 21300000, guid: a993bf2ba4691474485ad2c3d951ab1b, type: 3}
   trajectory: 0
   projectileSpeed: 20

@@ -130,8 +130,8 @@ public class UnitHUD : MonoBehaviour
             Transform iconTransform = newSlot.transform.Find("Icon");
             if (iconTransform != null)
             {
-                Image iconImg = iconTransform.GetComponent<Image>();
-                if (weapon.data.icon != null && iconImg != null) iconImg.sprite = weapon.data.icon; 
+               // Image iconImg = iconTransform.GetComponent<Image>();
+              //  if (weapon.data.icon != null && iconImg != null) iconImg.sprite = weapon.data.icon; 
             }
 
             Transform ammoTransform = newSlot.transform.Find("Ammo");

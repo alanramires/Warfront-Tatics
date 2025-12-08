@@ -22,10 +22,13 @@ MonoBehaviour:
   moveRange: 2
   maxHP: 10
   defense: 8
+  maxFuel: 70
   weapons:
-  - weaponName: LAW
-    icon: {fileID: 0}
-    attackPower: 7
-    minRange: 1
-    maxRange: 1
+  - data: {fileID: 11400000, guid: 03500c63d19d7a74795734ef0e2b6d64, type: 2}
     squadAttacks: 3
+    minRange: 1
+    maxRange: 2
+  - data: {fileID: 11400000, guid: a409f9a6160356b4690a47dd3a076c65, type: 2}
+    squadAttacks: 3
+    minRange: 1
+    maxRange: 2
