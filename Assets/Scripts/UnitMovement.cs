@@ -307,7 +307,7 @@ public class UnitMovement : MonoBehaviour
         if (boardCursor) boardCursor.UnlockMovement();
 
         // INTEGRAÇÃO: Lê os dados da ficha
-        int range = data != null ? data.moveRange : 3;
+        int range = GetEffectiveRange();
         UnitType type = data != null ? data.unitType : UnitType.Infantry;
         List<Vector3Int> path = Pathfinding.GetPathTo(currentCell, destination, range, GetMovementBlockers(), type);
 
@@ -359,7 +359,7 @@ public class UnitMovement : MonoBehaviour
         isPreMoved = false; 
 
         // INTEGRAÇÃO: Lê os dados da ficha
-        int range = data != null ? data.moveRange : 3;
+        int range = GetEffectiveRange();
         UnitType type = data != null ? data.unitType : UnitType.Infantry;
 
         List<Vector3Int> path = Pathfinding.GetPathTo(currentCell, posicaoOriginal, range, GetMovementBlockers(), type);
@@ -438,12 +438,23 @@ public class UnitMovement : MonoBehaviour
         if (boardCursor) boardCursor.ClearSelection(); 
     }
 
+    int GetEffectiveRange()
+    {
+        if (data == null) return 0;
+        
+        // Retorna o MENOR valor. 
+        // Se Speed=6 e Gas=2 -> Retorna 2.
+        // Se Speed=6 e Gas=50 -> Retorna 6.
+        return Mathf.Min(data.moveRange, currentFuel);
+    }
+
     void ShowRange()
     {
         if (rangeTilemap == null) return;
 
         // INTEGRAÇÃO: Lê os dados da ficha
-        int range = data != null ? data.moveRange : 3;
+       int range = GetEffectiveRange(); // <--- O desenho agora respeita a gasolina!
+
         UnitType type = data != null ? data.unitType : UnitType.Infantry;
 
         navigableTiles = Pathfinding.GetReachableTiles(
