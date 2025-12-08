@@ -201,7 +201,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8238804110877784561, guid: 337a230da60cbd346ba0869cdbed3938, type: 3}
       propertyPath: m_Name
-      value: Soldado (1)
+      value: APC
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -848,7 +848,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8238804110877784561, guid: 337a230da60cbd346ba0869cdbed3938, type: 3}
       propertyPath: m_Name
-      value: Soldado (2)
+      value: Bazooka
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1052,6 +1052,7 @@ MonoBehaviour:
   sfxCancel: {fileID: 8300000, guid: 29df727d77f29e142b37acb3297eac60, type: 3}
   sfxError: {fileID: 8300000, guid: e9afef00a4997d7408e2d4398ec37d66, type: 3}
   sfxDone: {fileID: 8300000, guid: 0874415ca15ec624dade251baa5bd412, type: 3}
+  sfxBeep: {fileID: 8300000, guid: 948ad09dfb8b46d49b2c2d6effee764c, type: 3}
   sfxMarch: {fileID: 8300000, guid: 199782ed9a55b8a4281295da78c1282d, type: 3}
   sfxVehicle: {fileID: 8300000, guid: f1cc14f7aac63b24790928e00f959c2c, type: 3}
   currentCell: {x: 0, y: 0, z: 0}
@@ -1293,7 +1294,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8238804110877784561, guid: 337a230da60cbd346ba0869cdbed3938, type: 3}
       propertyPath: m_Name
-      value: Soldado (4)
+      value: "Caminh\xE3o"
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1382,7 +1383,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8238804110877784561, guid: 337a230da60cbd346ba0869cdbed3938, type: 3}
       propertyPath: m_Name
-      value: Soldado (3)
+      value: Morteiro
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

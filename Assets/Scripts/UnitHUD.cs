@@ -36,7 +36,7 @@ public class UnitHUD : MonoBehaviour
             
             // Certo: Tem que ter (float) antes
             float pct = (float)current / max; 
-            Debug.Log($"Gasolina: {current}/{max} = {pct}"); // <--- OLHE O CONSOLE
+            //Debug.Log($"Gasolina: {current}/{max} = {pct}"); // <--- OLHE O CONSOLE
 
             fuelFillImage.fillAmount = pct; // Atualiza a barra
 

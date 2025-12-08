@@ -816,6 +816,7 @@ GameObject:
   - component: {fileID: 6129144791404060915}
   - component: {fileID: 1648903834765184017}
   - component: {fileID: 437459879411255288}
+  - component: {fileID: 459289463211474039}
   m_Layer: 0
   m_Name: Unidade
   m_TagString: Untagged
@@ -914,7 +915,7 @@ MonoBehaviour:
   currentFuel: 0
   masterProjectilePrefab: {fileID: 0}
   currentHP: 0
-  myWeapons: []
+  attackController: {fileID: 0}
   teamId: 0
   boardCursor: {fileID: 0}
   rangeTilemap: {fileID: 0}
@@ -924,6 +925,22 @@ MonoBehaviour:
   moveSpeed: 20
   visualOffset: 0
   isFinished: 0
+--- !u!114 &459289463211474039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8238804110877784561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbaf4b2f112fafa4aa9a5756151698c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitAttack
+  myWeapons: []
+  movement: {fileID: 0}
+  hud: {fileID: 0}
+  teamId: 0
 --- !u!1 &9154400239354296172
 GameObject:
   m_ObjectHideFlags: 0

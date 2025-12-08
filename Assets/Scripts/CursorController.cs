@@ -15,6 +15,7 @@ public class CursorController : MonoBehaviour
     public AudioClip sfxError; 
     public AudioClip sfxDone; 
     private AudioSource audioSource;
+    public AudioClip sfxBeep;
 
     [Header("Audio Movimento")] // <--- NOVO
     public AudioClip sfxMarch;
@@ -191,7 +192,18 @@ public class CursorController : MonoBehaviour
 
         if (unitUnderCursor != null)
         {
-            PlaySFX(sfxConfirm); 
+            // Se a unidade já agiu (Finished) ou é Inimiga...
+            if (unitUnderCursor.isFinished || unitUnderCursor.teamId != 0)
+            {
+                // MUDANÇA: Toca o Beep em vez do Erro (Feedback mais suave)
+                PlaySFX(sfxBeep); 
+            }
+            else
+            {
+                PlaySFX(sfxConfirm);
+            }
+
+            // Seleciona a unidade
             selectedUnit = unitUnderCursor;
             selectedUnit.TryToggleSelection(currentCell);
         }

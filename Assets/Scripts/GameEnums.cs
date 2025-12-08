@@ -1,6 +1,7 @@
-using UnityEngine; // Necessário para a classe Color
+using UnityEngine;
 
 // GameEnums.cs - Arquivo global de definições
+
 public enum UnitType 
 { 
     Infantry, 
@@ -16,27 +17,35 @@ public enum UnitType
 
 public enum TerrainCategory
 {
-    Plain,    // Planicie (Custo 1)
-    Forest,   // Floresta (Custo varia)
-    Mountain, // Montanha (Custo varia)
-    Water,    // Mar (Bloqueio)
-    Obstacle  // Muros
+    Plain,    
+    Forest,   
+    Mountain, 
+    Water,    
+    Obstacle  
 }
 
-// --- NOVO: PALETA DE CORES SUAVES ---
+// AQUI ESTÁ A CORREÇÃO: A lista completa de marchas
+public enum TurnState
+{
+    None,             // 0. Cursor Livre
+    Inspected,        // 0. Olhando (Inimigo/Aliado já agiu)
+    
+    Selected,         // 1. Unidade Selecionada
+    Moving,           // 2. Andando fisicamente
+    
+    MenuOpen,      // 3. O HUB (Essa é a que estava faltando!)
+    
+    // --- Ramos de Ação ---
+    Aiming,           // 3.1 Mirando
+    ConfirmTarget,    // 3.2 Confirmando
+    
+    Finished          // 4. Já agiu
+}
+
 public static class GameColors
 {
-    // Convertendo seus valores (0-255) para Unity (0.0 - 1.0)
-    
-    // Green: 144, 238, 144
     public static readonly Color TeamGreen = new Color(144f/255f, 238f/255f, 144f/255f); 
-    
-    // Red: 255, 155, 155
     public static readonly Color TeamRed = new Color(255f/255f, 155f/255f, 155f/255f);   
-
-    // Blue: 168, 168, 255
     public static readonly Color TeamBlue = new Color(168f/255f, 168f/255f, 255f/255f);  
-    
-    // Yellow: 255, 246, 141
     public static readonly Color TeamYellow = new Color(255f/255f, 246f/255f, 141f/255f); 
 }
