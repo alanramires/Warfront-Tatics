@@ -18,6 +18,17 @@ public class CameraController : MonoBehaviour
     void Start()
     {
         cam = GetComponent<Camera>();
+
+        // 1. Defina o tamanho inicial da câmera (Se não estiver definido no Inspector)
+        float tamanhoPadrao = cam.orthographicSize;
+
+        // 2. Aplica o Zoom Fixo de 1.5x (Magnífico)
+        float novoTamanho = tamanhoPadrao / 1.5f;
+
+        // 3. Aplica o novo tamanho
+        cam.orthographicSize = novoTamanho;
+        
+        // Remova a chamada para PanCamera() e ZoomCamera() do Update se não quiser controle
     }
 
     void Update()

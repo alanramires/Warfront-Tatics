@@ -18,7 +18,7 @@ MonoBehaviour:
   spriteRed: {fileID: 0}
   spriteBlue: {fileID: 0}
   spriteYellow: {fileID: 0}
-  unitType: 0
+  unitType: 1
   moveRange: 5
   maxHP: 10
   defense: 10

@@ -51,24 +51,37 @@ public class TurnStateManager : MonoBehaviour
                 }
                 break;
 
-            // --- DEGRAU 1: SELECTED ---
-            case TurnState.Selected:
-                if (cursorPosition == unit.currentCell)
+            // --- DEGRAU 1: SELECTED (Tenta mover) ---
+        case TurnState.Selected:
+            // 1. Clicou na PRÓPRIA UNIDADE -> Vai para o Menu
+            if (cursorPosition == unit.currentCell)
+            {
+                unit.MoveDirectlyToMenu(); // Chama OnMoveFinished -> MenuOpen
+            }
+            else
+            {
+                // 2. Clicou em OUTRO LUGAR
+                if (unit.IsValidDestination(cursorPosition)) 
                 {
+                    // DESTINO VÁLIDO: Inicia o movimento físico
                     SetState(TurnState.Moving); 
-                    unit.MoveDirectlyToMenu(); 
-                }
-                else if (unit.IsValidMove(cursorPosition)) 
-                {
-                    SetState(TurnState.Moving);
-                    unit.StartPhysicalMove(cursorPosition); 
+                    unit.StartPhysicalMove(cursorPosition);
                 }
                 else
                 {
-                    ProcessCancel(); 
+                    // DESTINO INVÁLIDO (Aliado, Inimigo, ou Terreno intransponível)
+                    
+                    // **CORREÇÃO: Toca som de erro e PERMANECE no estado 'Selected'.**
+                    if (unit.boardCursor != null)
+                    {
+                        unit.boardCursor.PlayError(); // Toca o som de erro (sfxError)
+                    }
+                    
+                    // Não há SetState() aqui. A função simplesmente retorna,
+                    // mantendo o estado 'Selected' e a seleção ativa.
                 }
-                break;
-
+            }
+            break;
             // --- DEGRAU 3: MENU ---
             case TurnState.MenuOpen:
                 // Lógica simulada de "Mirar com Enter"
@@ -109,20 +122,9 @@ public class TurnStateManager : MonoBehaviour
 
         switch (currentState)
         {
-            // CORREÇÃO CRÍTICA: Adicionei o caso Finished.
-            // Se por acaso o cursor pegar a unidade no estado Finished, o ESC solta ela.
-            case TurnState.Finished:
-                if (unit.boardCursor) unit.boardCursor.ClearSelection();
-                break;
-
             case TurnState.Inspected:
                 unit.ClearVisuals();
-                
-                // Se a unidade já acabou, ela volta para o estado lógico Finished
-                // Se era apenas inspeção de inimigo, volta para None
-                if (unit.isFinished) SetState(TurnState.Finished);
-                else SetState(TurnState.None);
-
+                SetState(TurnState.None);
                 if (unit.boardCursor) unit.boardCursor.ClearSelection();
                 break;
 
@@ -130,18 +132,26 @@ public class TurnStateManager : MonoBehaviour
                 unit.DeselectUnit();
                 SetState(TurnState.None);
                 break;
-
+                
             case TurnState.MenuOpen:
+                Debug.Log("Voltando (Undo)...");
                 SetState(TurnState.Moving); 
-                unit.StartUndoMove(); 
+                unit.StartUndoMove(); // Chama sua rotina de Undo estável
                 break;
 
             case TurnState.Aiming:
                 SetState(TurnState.MenuOpen);
+                Debug.Log("Voltou para o Menu.");
                 break;
 
             case TurnState.ConfirmTarget:
                 SetState(TurnState.Aiming);
+                Debug.Log("Cancelou confirmação.");
+                break;
+                
+            // Handle Finished state case if necessary based on your current logic
+            case TurnState.Finished:
+                if (unit.boardCursor) unit.boardCursor.ClearSelection();
                 break;
         }
     }

@@ -17,6 +17,10 @@ public class UnitMovement : MonoBehaviour
     public int currentFuel;
     private int pendingCost = 0; 
 
+    [Header("Undo History")]
+    public List<Vector3Int> lastPathTaken = new List<Vector3Int>(); 
+    private int lastMoveCost = 0; // Para guardar o custo antes de pagar
+
     [Header("Sistema de Combate")]
     public GameObject masterProjectilePrefab;
     public int currentHP;        
@@ -270,6 +274,7 @@ public class UnitMovement : MonoBehaviour
         UnitType type = data != null ? data.unitType : UnitType.Infantry;
         List<Vector3Int> path = Pathfinding.GetPathTo(currentCell, destination, range, GetMovementBlockers(), type);
 
+        // --- GERAÇÃO DO PENDING COST (Onde o custo é calculado) ---
         pendingCost = 0;
         foreach (Vector3Int tilePos in path)
         {
@@ -277,6 +282,12 @@ public class UnitMovement : MonoBehaviour
             if (TerrainManager.Instance != null) pendingCost += TerrainManager.Instance.GetMovementCost(tilePos, type);
             else pendingCost += 1; 
         }
+
+        // --- GRAVAÇÃO DO HISTÓRICO (AGORA ESTÁ CORRETO) ---
+        lastPathTaken.Clear();
+        lastPathTaken.AddRange(path); // Salva o caminho
+        lastMoveCost = pendingCost; // Salva o custo para reembolso
+        // ----------------------------------------------------
 
         for (int i = 1; i < path.Count; i++)
         {
@@ -300,29 +311,42 @@ public class UnitMovement : MonoBehaviour
 
     IEnumerator UndoMoveRoutine()
     {
-        int range = GetEffectiveRange();
-        UnitType type = data != null ? data.unitType : UnitType.Infantry;
+        // 1. REEMBOLSO DO CUSTO (Usando o valor pendente que foi pago em OnMoveFinished)
+        currentFuel += pendingCost; 
+        if (currentFuel > data.maxFuel) currentFuel = data.maxFuel;
+        if (hud) hud.UpdateFuel(currentFuel, data.maxFuel);
+        
+        // Zera o custo pendente após o reembolso
+        pendingCost = 0;
 
-        List<Vector3Int> path = Pathfinding.GetPathTo(currentCell, posicaoOriginal, range, GetMovementBlockers(), type);
-
-        for (int i = 1; i < path.Count; i++)
+        // 2. VERIFICAÇÃO DE CAMINHO
+        // Se a unidade se moveu (lista tem mais de 1 elemento), anima a volta
+        if (lastPathTaken.Count > 1)
         {
-            Vector3Int nextTile = path[i];
-            Vector3 targetPos = boardCursor.mainGrid.CellToWorld(nextTile);
-            targetPos.y += visualOffset; 
-
-            while (Vector3.Distance(transform.position, targetPos) > 0.01f)
+            // Começa do penúltimo (o destino) até o primeiro (a origem)
+            // i = lastPathTaken.Count - 2 é o tile que estava antes do destino final.
+            for (int i = lastPathTaken.Count - 2; i >= 0; i--)
             {
-                transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
-                if (boardCursor) boardCursor.transform.position = transform.position;
-                yield return null; 
+                Vector3Int nextTile = lastPathTaken[i];
+                Vector3 targetPos = boardCursor.mainGrid.CellToWorld(nextTile);
+                targetPos.y += visualOffset; 
+
+                while (Vector3.Distance(transform.position, targetPos) > 0.01f)
+                {
+                    transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+                    if (boardCursor) boardCursor.transform.position = transform.position;
+                    yield return null; 
+                }
+                transform.position = targetPos;
+                currentCell = nextTile; // Unidade está voltando
+                if (boardCursor) boardCursor.currentCell = currentCell;
             }
-            transform.position = targetPos;
-            currentCell = nextTile;
-            if (boardCursor) boardCursor.currentCell = currentCell;
         }
         
-        // --- RESTAURA ESTADO: VOLTA PRA SELECIONADO ---
+        // 3. LIMPEZA FINAL
+        lastPathTaken.Clear(); // Limpa o histórico
+        
+        // Volta para o estado Selecionado
         if(stateManager) stateManager.SetState(TurnState.Selected);
         
         ShowRange();
@@ -340,12 +364,11 @@ public class UnitMovement : MonoBehaviour
             if (currentFuel < 0) currentFuel = 0; 
             if (hud != null && data != null) hud.UpdateFuel(currentFuel, data.maxFuel);
             
-            // NÃO zeramos pendingCost aqui para poder devolver no Undo!
+            // CORREÇÃO: Não zera o pendingCost, pois o Undo precisa da informação do custo!
         }
 
         Debug.Log("Movimento Concluido. Menu Aberto.");
         
-        // 2. AVISA O CÉREBRO
         if (stateManager != null) stateManager.SetState(TurnState.MenuOpen);
     }
 
@@ -391,5 +414,12 @@ public class UnitMovement : MonoBehaviour
             spriteRenderer.color = originalColor;
             yield return new WaitForSeconds(1.0f); 
         }
+    }
+
+    // Helper para o Manager verificar se pode mover para este tile
+    public bool IsValidDestination(Vector3Int pos)
+    {
+        // O Pathfinding já calculou que esta lista não contém tiles de aliados ou inimigos
+        return validMoveTiles.Contains(pos); 
     }
 }

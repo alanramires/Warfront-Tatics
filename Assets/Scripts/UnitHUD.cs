@@ -62,14 +62,14 @@ public class UnitHUD : MonoBehaviour
         // 1. Pinta o quadradinho de fundo
         if (hpBackground != null) 
         {
-            hpBackground.color = teamColor;
+           // hpBackground.color = teamColor;
         }
 
         // 2. Decide a cor da Fonte
         if (hpText != null)
         {
-            if (teamId == 0 || teamId == 3) hpText.color = Color.black;
-            else hpText.color = Color.white;
+          //  if (teamId == 0 || teamId == 3) hpText.color = Color.black;
+          //  else hpText.color = Color.white;
         }
 
         // 3. Pinta o Cadeado com a cor do time
