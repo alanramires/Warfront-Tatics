@@ -8,6 +8,10 @@ public class CursorController : MonoBehaviour
     [Header("Referências")]
     public Grid mainGrid; 
 
+    [Header("Câmera")]
+    public CameraController cameraController;
+
+
     [Header("Audio SFX")]
     public AudioClip sfxCursor;
     public AudioClip sfxConfirm;
@@ -32,6 +36,11 @@ public class CursorController : MonoBehaviour
     {
         audioSource = GetComponent<AudioSource>();
         transform.position = mainGrid.CellToWorld(currentCell);
+
+        if (cameraController == null && Camera.main != null)
+        {
+            cameraController = Camera.main.GetComponent<CameraController>();
+        }
     }
     
     // --- MUDANÇA AQUI: Adicionado "public" ---
@@ -128,18 +137,22 @@ public class CursorController : MonoBehaviour
             PlaySFX(sfxCursor);
         }
 
-        // 2. AÇÕES (ENTER / ESC / TAB - IGUAIS AO ANTERIOR)
+        // 2. AÇÕES (ENTER / ESC / TAB)
         if (Input.GetKeyDown(KeyCode.Return)) HandleEnterKey();
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             PlaySFX(sfxCancel);
             if (selectedUnit != null) selectedUnit.HandleCancelInput();
         }
+
+        // TAB: navega entre unidades do time atual que ainda não agiram
         if (Input.GetKeyDown(KeyCode.Tab))
         {
-             var allUnits = FindObjectsByType<UnitMovement>(FindObjectsSortMode.None);
-             foreach(var u in allUnits) u.ResetTurn();
+            // Shift + Tab = volta na lista
+            int direction = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) ? -1 : 1;
+            CycleBetweenUnits(direction);
         }
+
     }
 
     // --- HELPER: Checa se posso ir para lá ---
@@ -218,4 +231,81 @@ public class CursorController : MonoBehaviour
         }
         return null;
     }
+
+    // Navega pelas unidades do time atual que ainda não finalizaram o turno
+    void CycleBetweenUnits(int direction)
+    {
+        // direction: +1 = próximo, -1 = anterior
+
+        // Cancela qualquer seleção atual para evitar estados estranhos
+        if (selectedUnit != null)
+        {
+            selectedUnit.HandleCancelInput();
+        }
+        ClearSelection();
+
+        // Coleta todas as unidades válidas na cena
+        UnitMovement[] allUnits = FindObjectsByType<UnitMovement>(FindObjectsSortMode.None);
+        List<UnitMovement> candidates = new List<UnitMovement>();
+
+        int currentTeamId = 0; // TODO: integrar com sistema de turnos futuramente
+
+        foreach (var unit in allUnits)
+        {
+            if (unit == null) continue;
+            if (unit.teamId != currentTeamId) continue;
+            if (unit.isFinished) continue; // já agiu nesse turno
+            candidates.Add(unit);
+        }
+
+        if (candidates.Count == 0)
+        {
+            PlayError();
+            return;
+        }
+
+        // Ordena por linha (Y) e coluna (X) pra ter uma ordem previsível
+        candidates.Sort((a, b) =>
+        {
+            int cmpY = a.currentCell.y.CompareTo(b.currentCell.y);
+            if (cmpY != 0) return cmpY;
+            return a.currentCell.x.CompareTo(b.currentCell.x);
+        });
+
+        // Descobre se o cursor já está sobre uma das unidades candidatas
+        int currentIndex = -1;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            if (candidates[i].currentCell == currentCell)
+            {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        int nextIndex;
+        if (currentIndex == -1)
+        {
+            // Se não estiver em nenhuma, começa do início ou do fim da lista
+            nextIndex = (direction > 0) ? 0 : candidates.Count - 1;
+        }
+        else
+        {
+            // Avança ou volta com wrap-around
+            nextIndex = currentIndex + direction;
+            if (nextIndex < 0) nextIndex = candidates.Count - 1;
+            if (nextIndex >= candidates.Count) nextIndex = 0;
+        }
+
+        UnitMovement target = candidates[nextIndex];
+        currentCell = target.currentCell;
+        transform.position = mainGrid.CellToWorld(currentCell);
+        PlaySFX(sfxCursor);
+
+        if (cameraController != null)
+        {
+            cameraController.FocusOn(transform.position, false); // false = faz um pan suave
+        }
+    }
+
 }

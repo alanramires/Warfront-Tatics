@@ -1,0 +1,34 @@
+## 🟢 Status da Componentização
+
+### 1. `TurnStateManager.cs` (Cérebro da Decisão) - 80% Concluído
+
+| Ação | Status | Detalhes |
+| :--- | :--- | :--- |
+| **Lógica de Input (TryToggle/Cancel)** | ✅ Concluído | `TryToggleSelection` e `HandleCancelInput` agora apenas delegam para o Manager (`ProcessInteraction` / `ProcessCancel`). |
+| **`FinishTurn` e `ResetTurn`** | ✅ Concluído | As lógicas foram movidas com sucesso para o `TurnStateManager`, e os erros de referência foram corrigidos. |
+| **`SelectUnit` / `DeselectUnit`** | ⚠️ Pendente | O Manager chama `unit.SelectUnit()` e `unit.DeselectUnit()`, mas a lógica **ainda está dentro do `UnitMovement.cs`**. Precisamos movê-la para o `UnitInteraction.cs`. |
+
+### 2. `UnitRangeFinder.cs` (Calculadora e Artista) - 0% Iniciado
+
+| Ação | Status | Detalhes |
+| :--- | :--- | :--- |
+| **`ShowRange`, `ClearRange`** | ❌ Pendente | Estas funções estão **integralmente** no `UnitMovement.cs`. |
+| **`GetMovementBlockers`** | ❌ Pendente | Helper de regra de movimento. |
+| **`GetStoppingBlockers`** | ❌ Pendente | Helper de regra de parada. |
+| **`GetEffectiveRange`** | ❌ Pendente | Helper de cálculo de alcance (combustível). |
+
+### 3. `UnitInteraction.cs` (Visual e UX) - 0% Iniciado
+
+| Ação | Status | Detalhes |
+| :--- | :--- | :--- |
+| **`SelectUnit`, `DeselectUnit`** | ❌ Pendente | As lógicas (piscar, setar `posicaoOriginal`, limpar cursor) estão **integralmente** no `UnitMovement.cs`. |
+| **`BlinkRoutine`** | ❌ Pendente | A coroutine de piscar está no `UnitMovement.cs`. |
+
+### 4. `UnitMovement.cs` (O Hub e Motor Físico) - OK
+
+| Ação | Status | Detalhes |
+| :--- | :--- | :--- |
+| **`MoveRoutine`, `UndoMoveRoutine`** | ✅ Concluído | A lógica central de animação/física está correta e limpa (após a remoção do Pathfinding na volta). |
+| **`lastPathTaken`, `pendingCost`** | ✅ Concluído | Variáveis intrínsecas ao movimento já estão na classe. |
+
+---

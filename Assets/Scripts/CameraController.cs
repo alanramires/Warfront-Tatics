@@ -6,6 +6,9 @@ public class CameraController : MonoBehaviour
     public float zoomSpeed = 5f;
     public float minZoom = 2f;
     public float maxZoom = 15f;
+    
+    [Header("Foco em Alvo")]
+    public float focusSpeed = 5f;
 
     [Header("Limites do Mapa (Opcional)")]
     // Se quiser travar a câmera, defina estes valores no Inspector
@@ -80,4 +83,43 @@ public class CameraController : MonoBehaviour
             cam.orthographicSize = Mathf.Clamp(newSize, minZoom, maxZoom);
         }
     }
+
+    public void FocusOn(Vector3 worldPosition, bool instant = false)
+    {
+        // Mantém o Z atual da câmera
+        Vector3 target = new Vector3(worldPosition.x, worldPosition.y, transform.position.z);
+
+        // Respeita limites se estiverem ativos
+        if (useLimits)
+        {
+            target.x = Mathf.Clamp(target.x, minX, maxX);
+            target.y = Mathf.Clamp(target.y, minY, maxY);
+        }
+
+        if (instant)
+        {
+            transform.position = target;
+        }
+        else
+        {
+            StopAllCoroutines();            // evita ter dois focos rodando ao mesmo tempo
+            StartCoroutine(SmoothFocus(target));
+        }
+    }
+
+    System.Collections.IEnumerator SmoothFocus(Vector3 target)
+    {
+        Vector3 start = transform.position;
+        float t = 0f;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime * focusSpeed;
+            transform.position = Vector3.Lerp(start, target, t);
+            yield return null;
+        }
+
+        transform.position = target;
+    }
+
 }

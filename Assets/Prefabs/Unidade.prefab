@@ -1624,7 +1624,7 @@ GameObject:
   - component: {fileID: 1648903834765184017}
   - component: {fileID: 437459879411255288}
   - component: {fileID: 459289463211474039}
-  - component: {fileID: 1905956849001913433}
+  - component: {fileID: 1328565259629048349}
   m_Layer: 0
   m_Name: Unidade
   m_TagString: Untagged
@@ -1722,6 +1722,7 @@ MonoBehaviour:
   hud: {fileID: 8229104681343081129}
   stateManager: {fileID: 0}
   currentFuel: 0
+  lastPathTaken: []
   masterProjectilePrefab: {fileID: 0}
   currentHP: 0
   myWeapons: []
@@ -1751,7 +1752,7 @@ MonoBehaviour:
   movement: {fileID: 0}
   hud: {fileID: 0}
   teamId: 0
---- !u!114 &1905956849001913433
+--- !u!114 &1328565259629048349
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1760,7 +1761,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8238804110877784561}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6bfa4fb55ff71442aedfa7231abe1bd, type: 3}
+  m_Script: {fileID: 11500000, guid: 0d1caca0e986a4b458e94e71d7027d5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurnStateManager
   currentState: 0
