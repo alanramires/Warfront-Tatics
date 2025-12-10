@@ -9,7 +9,34 @@ public class UnitAttack : MonoBehaviour
     [Header("Referências")]
     public UnitMovement movement; 
     public UnitHUD hud;           
-    public int teamId;            
+    public int teamId;    
+
+    void Awake()
+    {
+        // Se não tiver sido ligado via Inspector, pega automático
+        if (movement == null)
+            movement = GetComponent<UnitMovement>();
+
+        if (movement != null)
+        {
+            // Garante que o time do ataque é o mesmo da unidade
+            teamId = movement.teamId;
+
+            // Copia as armas da unidade se a lista local estiver vazia
+            if (myWeapons == null)
+                myWeapons = new List<WeaponConfig>();
+
+            if (myWeapons.Count == 0 && movement.myWeapons != null)
+            {
+                myWeapons.Clear();
+                myWeapons.AddRange(movement.myWeapons);
+            }
+
+            // HUD: se ninguém ligou, usa o da unidade
+            if (hud == null)
+                hud = movement.hud;
+        }
+    }      
 
     public void SetupAttack(UnitData data, UnitHUD _hud, int _teamId)
     {
@@ -23,57 +50,94 @@ public class UnitAttack : MonoBehaviour
         if (hud != null) hud.SetupWeapons(myWeapons);
     }
 
-    // Retorna a LISTA de alvos (Método que o UnitMovement vai chamar)
+    
+   // Retorna a LISTA de alvos (Método que o TurnStateManager vai chamar)
     public List<UnitMovement> GetValidTargets(bool hasMoved)
     {
-        List<UnitMovement> allTargets = new List<UnitMovement>();
-        List<WeaponConfig> validWeapons = GetUsableWeapons(hasMoved);
+        HashSet<UnitMovement> targetSet = new HashSet<UnitMovement>();
 
-        if (validWeapons.Count == 0) return allTargets;
+        // Garante referência à unidade
+        if (movement == null)
+            movement = GetComponent<UnitMovement>();
 
-        HashSet<UnitMovement> uniqueTargets = new HashSet<UnitMovement>();
-
-        foreach (WeaponConfig weapon in validWeapons)
+        if (movement == null)
         {
-            ScanRadiusForEnemies(weapon, uniqueTargets);
+            Debug.LogWarning($"[UnitAttack] {name} sem UnitMovement associado.");
+            return new List<UnitMovement>();
         }
 
-        allTargets = new List<UnitMovement>(uniqueTargets);
-        return allTargets;
-    }
+        // Escolhe de onde vem a lista de armas:
+        // 1) Preferência: armas do UnitMovement (montadas a partir do UnitData)
+        // 2) Se por algum motivo estiver vazio, usa myWeapons local
+        List<WeaponConfig> weaponSource = null;
 
-    List<WeaponConfig> GetUsableWeapons(bool hasMoved)
-    {
-        List<WeaponConfig> usable = new List<WeaponConfig>();
-        foreach (var w in myWeapons)
+        if (movement.myWeapons != null && movement.myWeapons.Count > 0)
+            weaponSource = movement.myWeapons;
+        else
+            weaponSource = myWeapons;
+
+        if (weaponSource == null || weaponSource.Count == 0)
         {
-            if (w.squadAttacks <= 0) continue;
-            if (hasMoved && w.minRange > 1) continue;
-            usable.Add(w);
+            Debug.Log($"[UnitAttack] {name} não tem armas configuradas. hasMoved={hasMoved}");
+            return new List<UnitMovement>();
         }
-        return usable;
-    }
 
-    void ScanRadiusForEnemies(WeaponConfig weapon, HashSet<UnitMovement> targetSet)
-    {
-        // --- CORREÇÃO DO WARNING AMARELO ---
-        // Usamos FindObjectsByType com SortMode.None (Mais rápido e moderno)
-        UnitMovement[] allUnits = FindObjectsByType<UnitMovement>(FindObjectsSortMode.None); 
+        // Garante que o teamId do ataque está sincronizado com a unidade
+        teamId = movement.teamId;
 
-        foreach (UnitMovement target in allUnits)
+        // Todas as unidades em cena
+        UnitMovement[] allUnits = FindObjectsByType<UnitMovement>(FindObjectsSortMode.None);
+
+        Debug.Log($"[UnitAttack] GetValidTargets: hasMoved={hasMoved}, armas={weaponSource.Count}, meuTime={teamId}");
+
+        foreach (var weapon in weaponSource)
         {
-            if (target == movement) continue; 
-            if (target.teamId == this.teamId) continue; 
-            if (target.currentHP <= 0) continue; 
+            if (weapon.data == null) continue;
 
-            int dist = Mathf.Abs(movement.currentCell.x - target.currentCell.x) + 
-                       Mathf.Abs(movement.currentCell.y - target.currentCell.y);
+            int effectiveMin = weapon.minRange;
+            int effectiveMax = weapon.maxRange;
 
-            if (dist >= weapon.minRange && dist <= weapon.maxRange)
+            // Regra “moveu x ficou parado”
+            if (hasMoved)
             {
-                targetSet.Add(target);
-                Debug.Log($"🎯 Alvo Detectado: {target.name} (Distância: {dist}) com arma {weapon.data.weaponName}");
+                // Morteiro 2–3: se moveu, não atira
+                if (weapon.minRange > 1)
+                    continue;
+
+                // Bazooka 1–2: se moveu, só alcance 1
+                if (weapon.maxRange > 1)
+                {
+                    effectiveMin = 1;
+                    effectiveMax = 1;
+                }
+            }
+
+            foreach (var target in allUnits)
+            {
+                if (target == null) continue;
+                if (target == movement) continue;           // não mira em si mesmo
+                if (target.teamId == teamId) continue;      // não mira aliado
+                if (target.currentHP <= 0) continue;        // morto não conta
+
+                int dx = movement.currentCell.x - target.currentCell.x;
+                int dy = movement.currentCell.y - target.currentCell.y;
+                int dist = Mathf.Abs(dx) + Mathf.Abs(dy);
+
+                if (dist >= effectiveMin && dist <= effectiveMax)
+                {
+                    if (targetSet.Add(target))
+                    {
+                        Debug.Log(
+                            $"🎯 {name} pode mirar em {target.name} (dist={dist}) " +
+                            $"arma={weapon.data.weaponName} rangeEfetivo={effectiveMin}-{effectiveMax} moveu={hasMoved}"
+                        );
+                    }
+                }
             }
         }
+
+        Debug.Log($"[UnitAttack] {name} encontrou {targetSet.Count} alvo(s).");
+
+        return new List<UnitMovement>(targetSet);
     }
 }

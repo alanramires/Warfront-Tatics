@@ -127,9 +127,14 @@ public partial class UnitMovement : MonoBehaviour
             // CORREÇÃO: Não zera o pendingCost, pois o Undo precisa da informação do custo!
         }
 
-        Debug.Log("Movimento Concluido. Menu Aberto.");
-        
-        if (stateManager != null) stateManager.SetState(TurnState.MenuOpen);
+        Debug.Log("Movimento concluído. Avaliando opções de ação...");
+
+         bool hasMoved = (currentCell != posicaoOriginal);
+
+        if (stateManager != null)
+        {
+            stateManager.EnterMoveConfirmation(hasMoved);
+        }
     }
 
     int GetEffectiveRange()

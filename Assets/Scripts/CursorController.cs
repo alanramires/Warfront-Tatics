@@ -153,6 +153,12 @@ public class CursorController : MonoBehaviour
             CycleBetweenUnits(direction);
         }
 
+        // M: na fase de menu pós-movimento, escolhe "Apenas mover" (não atacar)
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            TrySkipAttackAndFinishTurn();
+        }
+
     }
 
     // --- HELPER: Checa se posso ir para lá ---
@@ -231,6 +237,19 @@ public class CursorController : MonoBehaviour
         }
         return null;
     }
+
+    // Escolhe a opção "Apenas mover" no menu pós-movimento
+    void TrySkipAttackAndFinishTurn()
+    {
+        if (selectedUnit == null) return;
+        if (selectedUnit.stateManager == null) return;
+        if (selectedUnit.stateManager.currentState != TurnState.MenuOpen) return;
+
+        Debug.Log("➡️ Jogador escolheu: APENAS MOVER. Encerrando turno sem atacar.");
+        selectedUnit.FinishTurn();
+        ClearSelection();
+    }
+
 
     // Navega pelas unidades do time atual que ainda não finalizaram o turno
     void CycleBetweenUnits(int direction)

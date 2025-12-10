@@ -27,20 +27,17 @@ public enum TerrainCategory
 // AQUI ESTÁ A CORREÇÃO: A lista completa de marchas
 public enum TurnState
 {
-    None,             // 0. Cursor Livre
-    Inspected,        // 0. Olhando (Inimigo/Aliado já agiu)
-    
-    Selected,         // 1. Unidade Selecionada
-    Moving,           // 2. Andando fisicamente
-    
-    MenuOpen,      // 3. O HUB (Essa é a que estava faltando!)
-    
-    // --- Ramos de Ação ---
-    Aiming,           // 3.1 Mirando
-    ConfirmTarget,    // 3.2 Confirmando
-    
-    Finished          // 4. Já agiu
+    None,
+    Selected,      // unidade escolhida, ainda não se mexeu
+    Inspected,
+    Moving,        // animação de movimento rolando
+    ConfirmMove,   // já moveu (ou clicou nela mesma) e está “em pré-visualização”
+    MenuOpen,      // Mirar / Apenas mover
+    Aiming,        // Mirando em um alvo (próxima etapa)
+    ConfirmTarget, // Confirmação de tiro (depois)
+    Finished       // já agiu nesse turno
 }
+
 
 public static class GameColors
 {

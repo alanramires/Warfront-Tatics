@@ -52,7 +52,7 @@ public partial class UnitMovement : MonoBehaviour
     private Color originalColor; 
     
     private List<Vector3Int> validMoveTiles = new List<Vector3Int>();
-    private List<Vector3Int> navigableTiles = new List<Vector3Int>(); 
+    public List<Vector3Int> navigableTiles = new List<Vector3Int>(); 
 
     void Start()
     {

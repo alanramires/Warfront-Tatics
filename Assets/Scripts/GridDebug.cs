@@ -41,7 +41,7 @@ public class GridDebug : MonoBehaviour
         if (textComp != null)
         {
             // Exibe coordenada "Axial" (X, Y)
-            textComp.text = $"{pos.x},{pos.y}";
+            textComp.text = $"{pos.y},{pos.x}";
         }
     }
 }
