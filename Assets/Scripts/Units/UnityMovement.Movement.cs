@@ -112,6 +112,10 @@ public partial class UnitMovement : MonoBehaviour
         
         ShowRange();
         if (boardCursor) boardCursor.LockMovement(navigableTiles);
+
+        // No fim do UndoMoveRoutine()
+        if (PanelMoveConfirm.Instance) PanelMovement.Instance.Show(this);
+        if (PathPreviewLine.Instance) PathPreviewLine.Instance.Hide();
     }
 
     void OnMoveFinished()

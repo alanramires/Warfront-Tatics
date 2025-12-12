@@ -15,7 +15,10 @@ public partial class UnitMovement : MonoBehaviour
 
     [Header("Combustível")]
     public int currentFuel;
-    private int pendingCost = 0; 
+    private int pendingCost = 0;
+
+    // ✅ expõe só leitura pro painel/TurnStateManager
+    public int PendingCost => pendingCost;
 
     [Header("Undo History")]
     public List<Vector3Int> lastPathTaken = new List<Vector3Int>(); 

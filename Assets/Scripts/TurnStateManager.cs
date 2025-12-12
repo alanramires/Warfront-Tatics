@@ -45,6 +45,15 @@ public class TurnStateManager : MonoBehaviour
 
         // Entramos no estado de confirmação de movimento
         SetState(TurnState.ConfirmMove);
+        // ===== UI: painel de planejamento / confirmação =====
+            int houses = Mathf.Max(0, unit.lastPathTaken.Count - 1);   // se ficou parado, dá 0
+            int fuel = unit.PendingCost;                               // precisa existir no UnitMovement (read-only)
+            bool hasTargets = cachedTargets.Count > 0;
+
+            if (PanelMoveConfirm.Instance) PanelMoveConfirm.Instance.Show(houses, fuel, hasTargets);
+            if (PathPreviewLine.Instance) PathPreviewLine.Instance.Show(unit);
+
+
 
         if (cachedTargets.Count == 0)
         {
@@ -68,12 +77,12 @@ public class TurnStateManager : MonoBehaviour
 
         switch (currentState)
         {
-            // --- DEGRAU 0: NONE ---
-                case TurnState.Inspected:
-                    unit.ClearVisuals();
-                    SetState(TurnState.None);
-                    if (unit.boardCursor) unit.boardCursor.ClearSelection();
-                    break;
+    
+            case TurnState.Inspected:
+                unit.ClearVisuals();
+                SetState(TurnState.None);
+                if (unit.boardCursor) unit.boardCursor.ClearSelection();
+                break;
 
             case TurnState.None:
                 if (cursorPosition == unit.currentCell)
@@ -86,13 +95,15 @@ public class TurnStateManager : MonoBehaviour
                     else 
                     {
                         SetState(TurnState.Selected);
-                        unit.SelectUnit(); 
+                        unit.SelectUnit();
+
+                        // 👇 mostra painel de movimento
+                        if (PanelMovement.Instance != null)
+                            PanelMovement.Instance.Show(unit);
                     }
                 }
                 break;
             
-            // --- NOVO: SE JÁ ESTÁ FINALIZADA ---
-            // Se clicamos nela de novo, apenas garantimos que vá para Inspecionar
             case TurnState.Finished:
                 if (cursorPosition == unit.currentCell)
                 {
@@ -101,11 +112,15 @@ public class TurnStateManager : MonoBehaviour
                 }
                 break;
 
-            // --- DEGRAU 1: SELECTED (Tenta mover) ---
              case TurnState.Selected:
                 // 1. Clicou na PRÓPRIA UNIDADE -> Vai para o Menu
                 if (cursorPosition == unit.currentCell)
                 {
+                     // saiu do estado de escolha de casa
+                    if (PanelMovement.Instance != null)
+                        PanelMovement.Instance.Hide();
+                        Debug.Log("📋 Abrindo menu de ação (equivalente ao ENTER).");
+
                     unit.MoveDirectlyToMenu(); // Chama OnMoveFinished -> MenuOpen
                 }
                 else
@@ -113,7 +128,9 @@ public class TurnStateManager : MonoBehaviour
                     // 2. Clicou em OUTRO LUGAR
                     if (unit.IsValidDestination(cursorPosition)) 
                     {
-                        // DESTINO VÁLIDO: Inicia o movimento físico
+                        if (PanelMovement.Instance != null)
+                            PanelMovement.Instance.Hide();
+
                         SetState(TurnState.Moving); 
                         unit.StartPhysicalMove(cursorPosition);
                     }
@@ -132,9 +149,13 @@ public class TurnStateManager : MonoBehaviour
                     }
                 }
                 break;
-            // --- DEGRAU 3: MENU ---
+
             case TurnState.ConfirmMove:
             // ENTER dentro dessa fase
+            if (PanelMoveConfirm.Instance) PanelMoveConfirm.Instance.Hide();
+            if (PathPreviewLine.Instance) PathPreviewLine.Instance.Hide();
+
+
             if (cachedTargets.Count == 0)
             {
                 // Não tem alvo: confirma o movimento e termina o turno
@@ -180,14 +201,19 @@ public class TurnStateManager : MonoBehaviour
                 break;
 
             case TurnState.Selected:
-                // Cancela seleção e limpa tudo
                 Debug.Log("🔙 Cancelou seleção da unidade.");
                 unit.DeselectUnit();
                 SetState(TurnState.None);
+
+                // 👇 esconde painel
+                if (PanelMovement.Instance != null)
+                    PanelMovement.Instance.Hide();
                 break;
+
                 
             case TurnState.ConfirmMove:
                 Debug.Log("🔙 Cancelou movimento. Voltando à posição original.");
+                if (PanelMoveConfirm.Instance) PanelMoveConfirm.Instance.Hide();
 
                 if (lastMoveWasActualMovement)
                 {
@@ -200,6 +226,11 @@ public class TurnStateManager : MonoBehaviour
                     unit.ShowRange();
                     if (unit.boardCursor) unit.boardCursor.LockMovement(unit.navigableTiles);
                     SetState(TurnState.Selected);
+
+                    if (PanelMovement.Instance) PanelMovement.Instance.Show(unit); // volta o painel do "Selected"
+                    if (PanelMoveConfirm.Instance) PanelMoveConfirm.Instance.Hide();
+                    if (PathPreviewLine.Instance) PathPreviewLine.Instance.Hide();
+
                 }
                 break;
 
