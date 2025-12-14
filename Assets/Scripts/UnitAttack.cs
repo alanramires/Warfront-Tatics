@@ -121,7 +121,8 @@ public class UnitAttack : MonoBehaviour
 
                 int dx = movement.currentCell.x - target.currentCell.x;
                 int dy = movement.currentCell.y - target.currentCell.y;
-                int dist = Mathf.Abs(dx) + Mathf.Abs(dy);
+                int dist = HexUtils.HexDistance(movement.currentCell, target.currentCell, HexLayout.OddR);
+
 
                 if (dist >= effectiveMin && dist <= effectiveMax)
                 {

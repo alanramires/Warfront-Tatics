@@ -113,7 +113,7 @@ public partial class UnitMovement : MonoBehaviour
 
         if (boardCursor != null && boardCursor.mainGrid != null)
         {
-            Vector3 worldPos = boardCursor.mainGrid.CellToWorld(currentCell);
+            Vector3 worldPos = boardCursor.mainGrid.GetCellCenterWorld(currentCell);
             worldPos.y += visualOffset;
             transform.position = worldPos;
         }

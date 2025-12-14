@@ -43,7 +43,7 @@ public class CursorController : MonoBehaviour
         }
     }
     
-    // --- MUDANÇA AQUI: Adicionado "public" ---
+    // --- TOCADORES DE SOM ---
     public void PlaySFX(AudioClip clip)
     {
         if (clip != null && audioSource != null) audioSource.PlayOneShot(clip);
@@ -53,9 +53,16 @@ public class CursorController : MonoBehaviour
     {
         PlaySFX(sfxError);
     }
+        public void PlayCursor()
+    {
+        PlaySFX(sfxCursor);
+    }
+
+        public void PlayConfirm()
+    {
+        PlaySFX(sfxConfirm);
+    }
    
-   // --- REINSERINDO: LÓGICA DE SOM EM LOOP ---
-    // (O UnitMovement depende disso para tocar som durante a caminhada)
 
     public void StartMoveSound(UnitType unitType)
     {
@@ -137,7 +144,7 @@ public class CursorController : MonoBehaviour
             PlaySFX(sfxCursor);
         }
 
-        // 2. AÇÕES (ENTER / ESC / TAB)
+        // 2. AÇÕES (ENTER / ESC / TAB / ESPAÇO)
         if (Input.GetKeyDown(KeyCode.Return)) HandleEnterKey();
         if (Input.GetKeyDown(KeyCode.Escape))
         {
@@ -153,11 +160,18 @@ public class CursorController : MonoBehaviour
             CycleBetweenUnits(direction);
         }
 
-        // M: na fase de menu pós-movimento, escolhe "Apenas mover" (não atacar)
+        /* M: na fase de menu pós-movimento, escolhe "Apenas mover" (não atacar)
         if (Input.GetKeyDown(KeyCode.M))
         {
             TrySkipAttackAndFinishTurn();
+        }*/
+        
+        // ESPAÇO
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            selectedUnit?.stateManager?.ProcessSpace();
         }
+
 
     }
 
@@ -199,6 +213,7 @@ public class CursorController : MonoBehaviour
         return optionA; 
     }
 
+    // HANDLE ENTER
     void HandleEnterKey()
     {
         if (selectedUnit != null)
@@ -227,6 +242,16 @@ public class CursorController : MonoBehaviour
             selectedUnit.TryToggleSelection(currentCell);
         }
     }
+
+    // HANDLE ESPAÇO
+    void HandleSpaceKey()
+        {
+            if (selectedUnit == null) return;
+            var sm = selectedUnit.GetComponent<TurnStateManager>();
+            if (sm == null) return;
+
+            sm.ProcessSpace();
+        }
 
     UnitMovement FindUnitAt(Vector3Int cellPos)
     {
@@ -326,5 +351,8 @@ public class CursorController : MonoBehaviour
             cameraController.FocusOn(transform.position, false); // false = faz um pan suave
         }
     }
+
+
+
 
 }

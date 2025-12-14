@@ -35,6 +35,12 @@ public partial class UnitMovement : MonoBehaviour
     public void SelectUnit()
     {
         posicaoOriginal = currentCell;
+        // ✅ reseta preview sempre que seleciona
+        lastPathTaken.Clear();
+        lastPathTaken.Add(currentCell);
+        pendingCost = 0;
+        lastMoveCost = 0;
+
         StartCoroutine("BlinkRoutine");
         ShowRange();
         if (boardCursor) boardCursor.LockMovement(navigableTiles);

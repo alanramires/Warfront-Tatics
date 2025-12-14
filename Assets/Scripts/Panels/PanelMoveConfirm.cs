@@ -10,32 +10,40 @@ public class PanelMoveConfirm : MonoBehaviour
     public GameObject root;
 
     [Header("Texts (LeftInfo)")]
-    public TextMeshProUGUI housesText;    // "Casas: 2"
-    public TextMeshProUGUI fuelText;      // "Autonomia: 2" / "Combustível: 2"
+    public TextMeshProUGUI housesText;
+    public TextMeshProUGUI fuelText;
 
     [Header("Buttons")]
-    public Button btnPrimary;   // "Mirar [Enter]" OU "Mover [Enter]"
-    public Button btnAltMove;   // "Mover [Espaço]" (liga só quando tiver alvo)
-    public Button btnCancel;    // "Cancelar [ESC]"
+    public Button btnPrimary;
+    public Button btnAltMove;
+    public Button btnCancel;
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(this); return; }
+        // 🔥 IMPORTANTE: NÃO DESTRUIR duplicado (isso é o que estava “sumindo” com seu painel)
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning($"[PanelMoveConfirm] Duplicate detected -> disabling this copy: {name}");
+            gameObject.SetActive(false);
+            enabled = false;
+            return;
+        }
+
         Instance = this;
 
-        if (root == null) root = gameObject;
+        // 🔒 Segurança: root SEMPRE é esse próprio GO (evita você arrastar errado no Inspector)
+        root = gameObject;
+
         Hide();
     }
 
     public void Show(int houses, int fuelCost, bool hasTargets)
     {
         if (!root) root = gameObject;
-         if (this == null) return; // protege contra "destroyed"
 
         if (housesText) housesText.text = $"Casas: {houses}";
         if (fuelText) fuelText.text = $"Autonomia: {fuelCost}";
 
-        // MVP: sem menu real ainda, só muda o texto/visibilidade
         if (btnPrimary)
         {
             var t = btnPrimary.GetComponentInChildren<TextMeshProUGUI>();
@@ -43,23 +51,19 @@ public class PanelMoveConfirm : MonoBehaviour
         }
 
         if (btnAltMove)
-            btnAltMove.gameObject.SetActive(hasTargets); // só aparece se tem alvos
+            btnAltMove.gameObject.SetActive(hasTargets);
 
         root.SetActive(true);
     }
 
     public void Hide()
     {
-        if (!root) return; // se root sumiu, só não faz nada
-
-         if (this == null) return; // protege contra "destroyed"
-
-        if (root) root.SetActive(false);
+        if (!root) root = gameObject;
+        root.SetActive(false);
     }
 
-        private void OnDestroy()
+    private void OnDestroy()
     {
         if (Instance == this) Instance = null;
     }
-
 }

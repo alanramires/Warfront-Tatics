@@ -7,34 +7,55 @@ public class TurnStateManager : MonoBehaviour
     public TurnState currentState = TurnState.None;
 
     [Header("Referências")]
-    public UnitMovement unit; 
-    // Cache pós-movimento
+    public UnitMovement unit;
+    public PathPreviewLine pathLine;
+
+
     [HideInInspector] public List<UnitMovement> cachedTargets = new List<UnitMovement>();
     [HideInInspector] public bool lastMoveWasActualMovement = false;
+    [HideInInspector] public UnitMovement selectedTarget = null;
 
-    private void Start()
+    void Start()
     {
         unit = GetComponent<UnitMovement>();
+
+        // ✅ Reset defensivo: fecha TODOS os painéis encontrados (mesmo duplicados)
+        HideAllPanelsDefensive();
+
+        SetState(TurnState.None);
     }
 
-    /// <summary>
-    /// Chamado ao final do movimento físico (ou movimento parado).
-    /// Decide se o turno termina ou se abrimos o menu de ação (Mirar / Apenas Mover).
-    /// </summary>
-
-        public void EnterMoveConfirmation(bool hasMoved)
+    void OnDestroy()
     {
-        if (unit == null)
-            unit = GetComponent<UnitMovement>();
+        UnsubscribeSelectTargetDefensive();
+    }
+
+    // =========================================================
+    // MOVE FINISHED -> CONFIRM MOVE (SEMPRE)
+    // =========================================================
+    public void EnterMoveConfirmation(bool hasMoved)
+    {
+        if (unit == null) unit = GetComponent<UnitMovement>();
+        if (unit.lastPathTaken == null) unit.lastPathTaken = new List<Vector3Int>();
+
+        if (unit.lastPathTaken.Count == 0)
+            unit.lastPathTaken.Add(unit.posicaoOriginal);
+
+        if (unit.lastPathTaken.Count == 1 && unit.currentCell != unit.lastPathTaken[0])
+            unit.lastPathTaken.Add(unit.currentCell);
+
 
         lastMoveWasActualMovement = hasMoved;
+        selectedTarget = null;
         cachedTargets.Clear();
 
-        // Tenta pegar o UnitAttack
+        // ✅ Blindagem: fecha lista de alvos SEMPRE quando entra em ConfirmMove
+        HideAllSelectTargetPanels();
+
+        // Scan
         UnitAttack attack = unit.GetComponent<UnitAttack>();
         if (attack != null)
         {
-            // Scan de alvos já acontece aqui, mas NÃO decide nada ainda
             cachedTargets = attack.GetValidTargets(hasMoved);
             Debug.Log($"[TurnState] Scan pós-movimento: moveu={hasMoved}, alvos={cachedTargets.Count}");
         }
@@ -43,67 +64,107 @@ public class TurnStateManager : MonoBehaviour
             Debug.Log("[TurnState] Unidade sem UnitAttack. Só pode mover.");
         }
 
-        // Entramos no estado de confirmação de movimento
         SetState(TurnState.ConfirmMove);
-        // ===== UI: painel de planejamento / confirmação =====
-            int houses = Mathf.Max(0, unit.lastPathTaken.Count - 1);   // se ficou parado, dá 0
-            int fuel = unit.PendingCost;                               // precisa existir no UnitMovement (read-only)
-            bool hasTargets = cachedTargets.Count > 0;
 
-            if (PanelMoveConfirm.Instance) PanelMoveConfirm.Instance.Show(houses, fuel, hasTargets);
-            if (PathPreviewLine.Instance) PathPreviewLine.Instance.Show(unit);
+        // UI: fecha Movement, abre ConfirmMove + linha
+        HideAllMovementPanels();
+        ShowConfirmMovePanel();
+        PathPreviewLine.Instance?.Show(unit);
 
-
-
-        if (cachedTargets.Count == 0)
-        {
-            Debug.Log("🟢 Posição segura. ENTER = confirmar movimento, ESC = desfazer e escolher outro lugar.");
-        }
-        else
-        {
-            Debug.Log("⚠️ Inimigos ao alcance. ENTER = abrir opções (Mirar / Apenas mover), ESC = desfazer e escolher outro lugar.");
-        }
     }
 
-
-    // ========================================================================
-    // 🚀 AVANÇAR MARCHA (Enter / Clique)
-    // ========================================================================
+    // =========================================================
+    // ENTER / CLIQUE (cursor)
+    // =========================================================
     public void ProcessInteraction(Vector3Int cursorPosition)
     {
-        // CORREÇÃO CRÍTICA: Removi 'currentState == TurnState.Finished' daqui.
-        // Agora podemos interagir com unidades finalizadas (para inspecionar).
         if (currentState == TurnState.Moving) return;
 
         switch (currentState)
         {
-    
             case TurnState.Inspected:
                 unit.ClearVisuals();
                 SetState(TurnState.None);
-                if (unit.boardCursor) unit.boardCursor.ClearSelection();
+                unit.boardCursor?.ClearSelection();
                 break;
 
             case TurnState.None:
                 if (cursorPosition == unit.currentCell)
                 {
-                    if (unit.isFinished || unit.teamId != 0) 
+                    if (unit.isFinished || unit.teamId != 0)
                     {
                         SetState(TurnState.Inspected);
-                        unit.ShowRange(); 
+                        unit.ShowRange();
                     }
-                    else 
+                    else
                     {
                         SetState(TurnState.Selected);
                         unit.SelectUnit();
 
-                        // 👇 mostra painel de movimento
-                        if (PanelMovement.Instance != null)
-                            PanelMovement.Instance.Show(unit);
+                        HideAllConfirmMovePanels();
+                        HideAllSelectTargetPanels();
+                        HideAllPathLines();
+
+                        ShowMovementPanel();
                     }
                 }
                 break;
+
+            case TurnState.Selected:
+                if (cursorPosition == unit.currentCell)
+                {
+                    HideAllMovementPanels();
+                    unit.MoveDirectlyToMenu(); // no fim chama EnterMoveConfirmation(false)
+                }
+                else
+                {
+                    if (unit.IsValidDestination(cursorPosition))
+                    {
+                        HideAllMovementPanels();
+                        SetState(TurnState.Moving);
+                        unit.StartPhysicalMove(cursorPosition); // no fim chama EnterMoveConfirmation(true)
+                    }
+                    else
+                    {
+                        unit.boardCursor?.PlayError();
+                    }
+                }
+                break;
+
+            case TurnState.ConfirmMove:
+                // ✅ ENTER aqui é a ação primária:
+                // - sem alvos => confirma e encerra
+                // - com alvos => abre SelectTarget
+                HideAllConfirmMovePanels();
+                
+
+                if (cachedTargets.Count == 0)
+                {
+                    Debug.Log("✅ Confirmado: sem alvos. Encerrando turno.");
+                    unit.FinishTurn();
+                    HideAllPathLines();
+                }
+                else
+                {
+                    Debug.Log("👁️ Abrindo lista de alvos (1–9). ESC volta pro ConfirmMove.");
+                    SetState(TurnState.Aiming);
+                    unit.boardCursor?.PlayConfirm();
+                    SubscribeSelectTargetDefensive();
+                    ShowSelectTargetPanel();
+                    
+                }
+                break;
+
+            case TurnState.Aiming:
+                Debug.Log("🎯 Use 1–9 (ou Numpad 1–9) pra escolher alvo. ESC volta.");
+                break;
+
+            case TurnState.ConfirmTarget:
+                Debug.Log("🔥 (placeholder) ConfirmTarget: ENTER confirmaria ataque. ESC volta pra lista.");
+                break;
+
             
+
             case TurnState.Finished:
                 if (cursorPosition == unit.currentCell)
                 {
@@ -111,155 +172,195 @@ public class TurnStateManager : MonoBehaviour
                     unit.ShowRange();
                 }
                 break;
-
-             case TurnState.Selected:
-                // 1. Clicou na PRÓPRIA UNIDADE -> Vai para o Menu
-                if (cursorPosition == unit.currentCell)
-                {
-                     // saiu do estado de escolha de casa
-                    if (PanelMovement.Instance != null)
-                        PanelMovement.Instance.Hide();
-                        Debug.Log("📋 Abrindo menu de ação (equivalente ao ENTER).");
-
-                    unit.MoveDirectlyToMenu(); // Chama OnMoveFinished -> MenuOpen
-                }
-                else
-                {
-                    // 2. Clicou em OUTRO LUGAR
-                    if (unit.IsValidDestination(cursorPosition)) 
-                    {
-                        if (PanelMovement.Instance != null)
-                            PanelMovement.Instance.Hide();
-
-                        SetState(TurnState.Moving); 
-                        unit.StartPhysicalMove(cursorPosition);
-                    }
-                    else
-                    {
-                        // DESTINO INVÁLIDO (Aliado, Inimigo, ou Terreno intransponível)
-                        
-                        // **CORREÇÃO: Toca som de erro e PERMANECE no estado 'Selected'.**
-                        if (unit.boardCursor != null)
-                        {
-                            unit.boardCursor.PlayError(); // Toca o som de erro (sfxError)
-                        }
-                        
-                        // Não há SetState() aqui. A função simplesmente retorna,
-                        // mantendo o estado 'Selected' e a seleção ativa.
-                    }
-                }
-                break;
-
-            case TurnState.ConfirmMove:
-            // ENTER dentro dessa fase
-            if (PanelMoveConfirm.Instance) PanelMoveConfirm.Instance.Hide();
-            if (PathPreviewLine.Instance) PathPreviewLine.Instance.Hide();
-
-
-            if (cachedTargets.Count == 0)
-            {
-                // Não tem alvo: confirma o movimento e termina o turno
-                Debug.Log("✅ Movimento confirmado. Sem alvos ao alcance. Turno encerrado.");
-                unit.FinishTurn();
-            }
-            else
-            {
-                // Tem alvo: abre o "menu" Mirar / Apenas mover
-                Debug.Log("📋 Opções: ENTER = Mirar | M = Apenas mover | ESC = desfazer movimento.");
-                SetState(TurnState.MenuOpen);
-            }
-            break;
-
-            case TurnState.MenuOpen:
-                // ENTER = Mirar
-                Debug.Log("👁️ Escolheu MIRAR: montando lista de alvos no alcance - aguarde.");
-                SetState(TurnState.Aiming);
-                // Próxima etapa: usar cachedTargets para escolha de alvo
-                break;
-
-            case TurnState.Aiming:
-                // ENTER aqui depois vai confirmar alvo, por enquanto você pode só dar um log genérico
-                Debug.Log("📌 (placeholder) Confirmando alvo escolhido...");
-                SetState(TurnState.ConfirmTarget);
-                break;
         }
     }
 
-    // ========================================================================
-    // 🔙 VOLTAR MARCHA (ESC)
-    // ========================================================================
+    // =========================================================
+    // ESC
+    // =========================================================
     public void ProcessCancel()
     {
         if (currentState == TurnState.Moving) return;
 
         switch (currentState)
         {
-            case TurnState.Inspected:
-                unit.ClearVisuals();
-                SetState(TurnState.None);
-                if (unit.boardCursor) unit.boardCursor.ClearSelection();
-                break;
-
             case TurnState.Selected:
-                Debug.Log("🔙 Cancelou seleção da unidade.");
                 unit.DeselectUnit();
+                HideAllMovementPanels();
                 SetState(TurnState.None);
-
-                // 👇 esconde painel
-                if (PanelMovement.Instance != null)
-                    PanelMovement.Instance.Hide();
                 break;
 
-                
             case TurnState.ConfirmMove:
-                Debug.Log("🔙 Cancelou movimento. Voltando à posição original.");
-                if (PanelMoveConfirm.Instance) PanelMoveConfirm.Instance.Hide();
+                HideAllConfirmMovePanels();
+                HideAllPathLines();
 
                 if (lastMoveWasActualMovement)
                 {
-                    // Desfaz movimento animado
+                    Debug.Log("🔙 Undo do movimento.");
                     unit.StartUndoMove();
                 }
                 else
                 {
-                    // Não moveu de verdade (clicou na mesma casa): só volta pro estado Selected
-                    unit.ShowRange();
-                    if (unit.boardCursor) unit.boardCursor.LockMovement(unit.navigableTiles);
+                    Debug.Log("🔙 Voltando pro Selected (ficou parado).");
                     SetState(TurnState.Selected);
-
-                    if (PanelMovement.Instance) PanelMovement.Instance.Show(unit); // volta o painel do "Selected"
-                    if (PanelMoveConfirm.Instance) PanelMoveConfirm.Instance.Hide();
-                    if (PathPreviewLine.Instance) PathPreviewLine.Instance.Hide();
-
+                    unit.SelectUnit();
+                    ShowMovementPanel();
                 }
                 break;
 
-            case TurnState.MenuOpen:
-                // Volta um passo: sai do menu Mirar/Mover, mas mantém o movimento
-                Debug.Log("🔙 Saiu do menu de ação. Ainda em confirmação de movimento.");
-                SetState(TurnState.ConfirmMove);
-                break;
-
             case TurnState.Aiming:
-                // Volta pro menu Mirar/Mover
-                Debug.Log("🔙 Cancelou mira. Voltando para opções Mirar / Apenas mover.");
-                SetState(TurnState.MenuOpen);
+                Debug.Log("🔙 Lista de alvos -> volta ConfirmMove.");
+                HideAllSelectTargetPanels();
+                UnsubscribeSelectTargetDefensive();
+
+                SetState(TurnState.ConfirmMove);
+                ShowConfirmMovePanel();
                 break;
 
             case TurnState.ConfirmTarget:
-                Debug.Log("🔙 Cancelou confirmação de alvo.");
+                Debug.Log("🔙 ConfirmTarget -> volta lista.");
                 SetState(TurnState.Aiming);
+                SubscribeSelectTargetDefensive();
+                ShowSelectTargetPanel();
                 break;
 
-            case TurnState.Finished:
-                // já era, nada pra cancelar
+            case TurnState.Inspected:
+                unit.ClearVisuals();
+                SetState(TurnState.None);
+                unit.boardCursor?.ClearSelection();
                 break;
         }
     }
 
-    public void SetState(TurnState newState)
+    public void SetState(TurnState newState) => currentState = newState;
+
+    // ========================================================
+    //           ESPAÇO
+    // ========================================================
+
+    public void ProcessSpace()
     {
-        currentState = newState;
+        // Só faz algo quando estamos confirmando e tem alvos
+        if (currentState != TurnState.ConfirmMove) return;
+
+        if (cachedTargets.Count > 0)
+        {
+            Debug.Log("🟦 Apenas mover (Space). Turno encerrado sem atacar.");
+            // “Apenas mover”
+            PanelMoveConfirm.Instance?.Hide();
+            pathLine?.Hide();
+            unit.FinishTurn(); // toca done, cadeado, etc
+        }
+        else
+        {
+            // opcional: Space confirma também quando não há alvo
+            // Debug.Log("🟦 Confirmado (Space). Turno encerrado.");
+           // unit.FinishTurn();
+        }
     }
 
+
+    // =========================================================
+    // UI Helpers (defensivos contra duplicata)
+    // =========================================================
+
+    void HideAllPanelsDefensive()
+    {
+        HideAllMovementPanels();
+        HideAllConfirmMovePanels();
+        HideAllSelectTargetPanels();
+        HideAllPathLines();
+    }
+
+    void HideAllMovementPanels()
+    {
+        foreach (var p in FindObjectsByType<PanelMovement>(FindObjectsSortMode.None))
+            if (p != null) p.Hide();
+    }
+
+    void HideAllConfirmMovePanels()
+    {
+        foreach (var p in FindObjectsByType<PanelMoveConfirm>(FindObjectsSortMode.None))
+            if (p != null) p.Hide();
+    }
+
+    void HideAllSelectTargetPanels()
+    {
+        foreach (var p in FindObjectsByType<PanelSelectTarget>(FindObjectsSortMode.None))
+            if (p != null) p.Hide();
+    }
+
+    void HideAllPathLines()
+    {
+        foreach (var p in FindObjectsByType<PathPreviewLine>(FindObjectsSortMode.None))
+            if (p != null) p.Hide();
+    }
+
+    void ShowMovementPanel()
+    {
+        PanelMovement.Instance?.Show(unit);
+    }
+
+    void ShowConfirmMovePanel()
+    {
+        int houses = Mathf.Max(0, unit.lastPathTaken.Count - 1);
+        int fuelCost = ComputeFuelCostFromLastPath();
+        bool hasTargets = cachedTargets.Count > 0;
+
+        PanelMoveConfirm.Instance?.Show(houses, fuelCost, hasTargets);
+        pathLine?.Show(unit);
+    }
+
+    void ShowSelectTargetPanel()
+    {
+        PanelSelectTarget.Instance?.Show(unit, cachedTargets);
+    }
+
+    int ComputeFuelCostFromLastPath()
+    {
+        if (unit == null || unit.data == null) return 0;
+        if (unit.lastPathTaken == null || unit.lastPathTaken.Count == 0) return 0;
+
+        int cost = 0;
+        UnitType type = unit.data.unitType;
+        Vector3Int start = unit.lastPathTaken[0];
+
+        for (int i = 0; i < unit.lastPathTaken.Count; i++)
+        {
+            var tile = unit.lastPathTaken[i];
+            if (tile == start) continue;
+
+            if (TerrainManager.Instance != null) cost += TerrainManager.Instance.GetMovementCost(tile, type);
+            else cost += 1;
+        }
+        return cost;
+    }
+
+    // =========================================================
+    // SelectTarget callbacks (defensivos)
+    // =========================================================
+    void SubscribeSelectTargetDefensive()
+    {
+        if (PanelSelectTarget.Instance == null) return;
+        PanelSelectTarget.Instance.OnTargetChosen -= OnTargetChosen;
+        PanelSelectTarget.Instance.OnTargetChosen += OnTargetChosen;
+    }
+
+    void UnsubscribeSelectTargetDefensive()
+    {
+        if (PanelSelectTarget.Instance == null) return;
+        PanelSelectTarget.Instance.OnTargetChosen -= OnTargetChosen;
+    }
+
+    void OnTargetChosen(UnitMovement target)
+    {
+        selectedTarget = target;
+        Debug.Log($"✅ Alvo escolhido: {target.name} ({target.currentCell.x},{target.currentCell.y})");
+
+        HideAllSelectTargetPanels();
+        UnsubscribeSelectTargetDefensive();
+
+        SetState(TurnState.ConfirmTarget);
+        Debug.Log("❓ Confirmar ataque? ENTER confirma, ESC volta pra lista.");
+    }
 }

@@ -16,11 +16,17 @@ public partial class UnitMovement : MonoBehaviour
     public void MoveDirectlyToMenu()
     {
         if (boardCursor) boardCursor.PlaySFX(boardCursor.sfxConfirm);
-        
-        // Simula que "Já moveu" e chama o final
+
+        // ✅ garante que o path preview seja consistente
+        lastPathTaken.Clear();
+        lastPathTaken.Add(currentCell);
+        pendingCost = 0;
+        lastMoveCost = 0;
+
         if (boardCursor) boardCursor.LockMovement(new List<Vector3Int> { currentCell });
-        OnMoveFinished(); 
+        OnMoveFinished();
     }
+
 
     public void StartUndoMove()
     {
@@ -53,7 +59,9 @@ public partial class UnitMovement : MonoBehaviour
         for (int i = 1; i < path.Count; i++)
         {
             Vector3Int nextTile = path[i];
-            Vector3 targetPos = boardCursor.mainGrid.CellToWorld(nextTile);
+            Vector3 targetPos = boardCursor.mainGrid.GetCellCenterWorld(nextTile);
+
+
             targetPos.y += visualOffset; 
 
             while (Vector3.Distance(transform.position, targetPos) > 0.01f)
@@ -89,7 +97,8 @@ public partial class UnitMovement : MonoBehaviour
             for (int i = lastPathTaken.Count - 2; i >= 0; i--)
             {
                 Vector3Int nextTile = lastPathTaken[i];
-                Vector3 targetPos = boardCursor.mainGrid.CellToWorld(nextTile);
+                Vector3 targetPos = boardCursor.mainGrid.GetCellCenterWorld(nextTile);
+
                 targetPos.y += visualOffset; 
 
                 while (Vector3.Distance(transform.position, targetPos) > 0.01f)
@@ -114,7 +123,8 @@ public partial class UnitMovement : MonoBehaviour
         if (boardCursor) boardCursor.LockMovement(navigableTiles);
 
         // No fim do UndoMoveRoutine()
-        if (PanelMoveConfirm.Instance) PanelMovement.Instance.Show(this);
+        if (PanelMovement.Instance) PanelMovement.Instance.Show(this);
+
         if (PathPreviewLine.Instance) PathPreviewLine.Instance.Hide();
     }
 
