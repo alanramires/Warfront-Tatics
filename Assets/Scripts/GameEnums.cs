@@ -32,7 +32,6 @@ public enum TurnState
     Inspected,
     Moving,        // animação de movimento rolando
     ConfirmMove,   // já moveu (ou clicou nela mesma) e está “em pré-visualização”
-    MenuOpen,      // Mirar / Apenas mover
     Aiming,        // Mirando em um alvo (próxima etapa)
     ConfirmTarget, // Confirmação de tiro (depois)
     Finished       // já agiu nesse turno

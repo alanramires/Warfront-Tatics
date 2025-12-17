@@ -18,7 +18,7 @@ public class PathPreviewLine : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log($"[PathPreviewLine] Awake: {name} scene={gameObject.scene.name} instance={(Instance? Instance.gameObject.scene.name : "null")}");
+       // Debug.Log($"[PathPreviewLine] Awake: {name} scene={gameObject.scene.name} instance={(Instance? Instance.gameObject.scene.name : "null")}");
 
          if (Instance != null && Instance != this)
         {
@@ -32,14 +32,14 @@ public class PathPreviewLine : MonoBehaviour
             // ✅ Se eu sou da cena e a instância atual não é (DDOL), eu substituo.
             if (thisIsScene && !otherIsScene)
             {
-                Debug.LogWarning("[PathPreviewLine] Scene instance replacing non-scene instance.");
+               // Debug.LogWarning("[PathPreviewLine] Scene instance replacing non-scene instance.");
                 Destroy(Instance.gameObject);
                 Instance = this;
             }
             // ✅ Se as duas são de cena, mantém a primeira e desliga a outra (evita duplicar)
             else
             {
-                Debug.LogWarning($"[PathPreviewLine] Duplicate detected -> disabling this copy: {name} ({gameObject.scene.name})");
+               // Debug.LogWarning($"[PathPreviewLine] Duplicate detected -> disabling this copy: {name} ({gameObject.scene.name})");
                 gameObject.SetActive(false);
                 enabled = false;
                 return;
@@ -101,7 +101,7 @@ public class PathPreviewLine : MonoBehaviour
             return;
         }
 
-        Debug.Log($"PathPreviewLine: Showing path with {path.Count} points: {string.Join(", ", path)}");
+        //Debug.Log($"PathPreviewLine: Showing path with {path.Count} points: {string.Join(", ", path)}");
 
         // cor do time + alpha
         Color c = GetTeamColor(unit.teamId);
@@ -131,16 +131,16 @@ public class PathPreviewLine : MonoBehaviour
             positions.Add(p);
         }
 
-        Debug.Log($"PathPreviewLine: Positions: {string.Join(", ", positions)}");
+       // Debug.Log($"PathPreviewLine: Positions: {string.Join(", ", positions)}");
 
         lr.enabled = true;
-        Debug.Log($"PathPreviewLine: Line enabled with {lr.positionCount} positions");
+       // Debug.Log($"PathPreviewLine: Line enabled with {lr.positionCount} positions");
         lr.gameObject.SetActive(true);
         lr.forceRenderingOff = false; // garante que não ficou “mutado”
         lr.Simplify(0f);              // força recalcular internamente (hack bom)
         Vector3 p0 = lr.GetPosition(0);
         Vector3 pN = lr.GetPosition(lr.positionCount - 1);
-        Debug.Log($"PathPreviewLine world from {p0} to {pN} | bounds={lr.bounds}");
+       // Debug.Log($"PathPreviewLine world from {p0} to {pN} | bounds={lr.bounds}");
 
 
     }

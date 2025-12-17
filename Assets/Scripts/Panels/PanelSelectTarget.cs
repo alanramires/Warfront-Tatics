@@ -19,6 +19,7 @@ public class PanelSelectTarget : MonoBehaviour
     private readonly List<UnitMovement> targets = new List<UnitMovement>();
     private readonly List<GameObject> spawned = new List<GameObject>();
     private UnitMovement attacker;
+    public int LastChosenIndex { get; private set; } = -1;
 
     public bool IsOpen
     {
@@ -89,20 +90,28 @@ public class PanelSelectTarget : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    private void Update()
+   private void Update()
     {
         if (!IsOpen) return;
 
-        // Atalhos: 1..9 (teclado normal + numpad)
+        // ENTER = alvo 0
+        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        {
+            ChooseIndex(0);
+            return;
+        }
+
+        // 1..9 (teclado normal + numpad) = alvo 1..9
         for (int n = 1; n <= 9; n++)
         {
             if (Input.GetKeyDown(KeyCode.Alpha0 + n) || Input.GetKeyDown(KeyCode.Keypad0 + n))
             {
-                ChooseIndex(n - 1);
+                ChooseIndex(n);
                 return;
             }
         }
     }
+
 
     public void Show(UnitMovement attackerUnit, List<UnitMovement> newTargets)
     {
@@ -127,9 +136,12 @@ public class PanelSelectTarget : MonoBehaviour
         root.SetActive(false);
     }
 
+    // Alvo escolhido
     private void ChooseIndex(int index)
     {
         if (index < 0 || index >= targets.Count) return;
+
+        LastChosenIndex = index;
 
         UnitMovement chosen = targets[index];
         if (chosen == null) return;
@@ -137,13 +149,14 @@ public class PanelSelectTarget : MonoBehaviour
         OnTargetChosen?.Invoke(chosen);
     }
 
+
     private void RebuildList()
     {
         ClearList();
 
         if (listRoot == null || targetItemTemplate == null) return;
 
-        int count = Mathf.Min(9, targets.Count);
+        int count = Mathf.Min(10, targets.Count);
 
         for (int i = 0; i < count; i++)
         {
@@ -183,18 +196,19 @@ public class PanelSelectTarget : MonoBehaviour
                 }
             }
 
-            // Texto: "[1] Apache (0,16)"
+
+            // Texto: "[ENTER] Apache (0,16)" ou "[1] ... "
             if (txt != null)
             {
                 string unitName = (t.data != null && !string.IsNullOrEmpty(t.data.unitName))
                     ? t.data.unitName
                     : t.name;
 
-                txt.text = $"[{i + 1}] {unitName} ({t.currentCell.y},{t.currentCell.x})";
-
-                // cor “tema” do atacante (player)
+                string hotkey = (i == 0) ? "ENTER" : i.ToString();
+                txt.text = $"[{hotkey}] {unitName} ({t.currentCell.y},{t.currentCell.x})";
                 txt.color = GetTeamColor(attacker != null ? attacker.teamId : 0);
             }
+
         }
     }
 

@@ -132,11 +132,8 @@ public class TurnStateManager : MonoBehaviour
                 break;
 
             case TurnState.ConfirmMove:
-                // ✅ ENTER aqui é a ação primária:
-                // - sem alvos => confirma e encerra
-                // - com alvos => abre SelectTarget
+                // fecha o painel confirm move
                 HideAllConfirmMovePanels();
-                
 
                 if (cachedTargets.Count == 0)
                 {
@@ -146,30 +143,36 @@ public class TurnStateManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("👁️ Abrindo lista de alvos (1–9). ESC volta pro ConfirmMove.");
+                    Debug.Log("👁️ Abrindo lista de alvos (ENTER=0, 1–9). ESC volta pro ConfirmMove.");
+
+                    // importante: ao entrar no Aiming, some com o pathline do ConfirmMove
+                    HideAllPathLines();
+
                     SetState(TurnState.Aiming);
                     unit.boardCursor?.PlayConfirm();
+
                     SubscribeSelectTargetDefensive();
                     ShowSelectTargetPanel();
-                    
                 }
                 break;
 
+
             case TurnState.Aiming:
-                // apos selecionar 1 alvo da lista
-                PanelMoveConfirm.Instance?.Hide();
-                HideAllPathLines();
-                PanelConfirmTarget.Instance?.Show(selectedTarget, 0);
-                SetState(TurnState.Aiming);
                 Debug.Log("🎯 Alvo selecionado. ENTER para confirmar ataque, ESC para voltar à lista.");
                 break;
 
             case TurnState.ConfirmTarget:
                 PanelConfirmTarget.Instance?.Hide();
+                HideAllSelectTargetPanels();
                 HideAllPathLines();
-                
-                Debug.Log("🔥 animação de tiro em andamento, calculos sendo feitos, aguarde...");
+
+                Debug.Log("🔥 balas voando, aguarde...");
+
+                // placeholder: por enquanto só encerra o turno (pra não travar o fluxo)
+                unit.FinishTurn();
+                SetState(TurnState.Finished);
                 break;
+
 
             
 
@@ -223,14 +226,26 @@ public class TurnStateManager : MonoBehaviour
 
                 SetState(TurnState.ConfirmMove);
                 ShowConfirmMovePanel();
+                PathPreviewLine.Instance?.Show(unit);
                 break;
 
             case TurnState.ConfirmTarget:
-                Debug.Log("🔙 ConfirmTarget -> volta lista.");
+                Debug.Log("🔙 ConfirmTarget -> volta para Aiming (lista).");
+
+                PanelConfirmTarget.Instance?.Hide();
+
+                // volta pra lista de alvos
+                if (PanelSelectTarget.Instance)
+                {
+                    PanelSelectTarget.Instance.OnTargetChosen -= OnTargetChosen;
+                    PanelSelectTarget.Instance.OnTargetChosen += OnTargetChosen;
+                    PanelSelectTarget.Instance.Show(unit, cachedTargets);
+                }
+
                 SetState(TurnState.Aiming);
-                SubscribeSelectTargetDefensive();
-                ShowSelectTargetPanel();
                 break;
+
+
 
             case TurnState.Inspected:
                 unit.ClearVisuals();
@@ -240,7 +255,13 @@ public class TurnStateManager : MonoBehaviour
         }
     }
 
-    public void SetState(TurnState newState) => currentState = newState;
+    // DEFINIR ESTADO
+    public void SetState(TurnState newState)
+{
+    Debug.Log($"---------------> TurnState: {currentState} -> {newState}", this);
+    currentState = newState;
+}
+
 
     // ========================================================
     //           ESPAÇO
@@ -360,15 +381,23 @@ public class TurnStateManager : MonoBehaviour
         PanelSelectTarget.Instance.OnTargetChosen -= OnTargetChosen;
     }
 
-    void OnTargetChosen(UnitMovement target)
+    private void OnTargetChosen(UnitMovement target)
     {
-        selectedTarget = target;
-        Debug.Log($"✅ Alvo escolhido: {target.name} ({target.currentCell.x},{target.currentCell.y})");
+        if (target == null) return;
 
-        HideAllSelectTargetPanels();
-        UnsubscribeSelectTargetDefensive();
+        // fecha a lista
+        if (PanelSelectTarget.Instance) PanelSelectTarget.Instance.Hide();
 
+        // toca o som de confirmar
+        if (unit != null && unit.boardCursor != null)
+            unit.boardCursor.PlaySFX(unit.boardCursor.sfxConfirm); // <-- confirm.mp3 no Inspector do Cursor
+
+        // abre confirm
+        int idx = (PanelSelectTarget.Instance != null) ? PanelSelectTarget.Instance.LastChosenIndex : 0;
+        PanelConfirmTarget.Instance?.Show(target);
         SetState(TurnState.ConfirmTarget);
-        Debug.Log("❓ Confirmar ataque? ENTER confirma, ESC volta pra lista.");
+
     }
+
+
 }

@@ -263,7 +263,7 @@ public class CursorController : MonoBehaviour
     {
         if (selectedUnit == null) return;
         if (selectedUnit.stateManager == null) return;
-        if (selectedUnit.stateManager.currentState != TurnState.MenuOpen) return;
+       // if (selectedUnit.stateManager.currentState != TurnState.MenuOpen) return;
 
         Debug.Log("➡️ Jogador escolheu: APENAS MOVER. Encerrando turno sem atacar.");
         selectedUnit.FinishTurn();
