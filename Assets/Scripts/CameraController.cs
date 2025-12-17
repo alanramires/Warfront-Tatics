@@ -122,4 +122,73 @@ public class CameraController : MonoBehaviour
         transform.position = target;
     }
 
+    // Foca na posição com offset dinâmico baseado na posição do cursor
+    public void FocusOnWithOffset(Vector3 worldPos)
+    {
+        Vector3 screenPoint = cam.WorldToScreenPoint(worldPos);
+
+        // Determina a posição alvo na tela baseada na posição atual do cursor
+        // Se cursor à esquerda, alvo à direita (75%), se à direita, alvo à esquerda (25%), etc. para dar mais espaço
+        float targetX = screenPoint.x < Screen.width / 2 ? 0.75f : 0.25f;
+        float targetY = screenPoint.y < Screen.height / 2 ? 0.75f : 0.25f;
+
+        Vector3 desiredScreenPoint = new Vector3(
+            Screen.width * targetX,
+            Screen.height * targetY,
+            cam.nearClipPlane
+        );
+
+        Vector3 desiredWorldPoint = cam.ScreenToWorldPoint(desiredScreenPoint);
+        Vector3 delta = worldPos - desiredWorldPoint;
+        Vector3 targetCamPos = transform.position + delta;
+        targetCamPos.z = transform.position.z;
+
+        // Aplica limites
+        if (useLimits)
+        {
+            targetCamPos.x = Mathf.Clamp(targetCamPos.x, minX, maxX);
+            targetCamPos.y = Mathf.Clamp(targetCamPos.y, minY, maxY);
+        }
+
+        StartCoroutine(SmoothFocus(targetCamPos));
+    }
+
+    // Ajusta a câmera se o cursor estiver próximo da borda ou fora da tela
+    public void AdjustCameraForCursor(Vector3 cursorWorldPos)
+{
+    Vector3 sp = cam.WorldToScreenPoint(cursorWorldPos);
+
+    float marginX = Screen.width * 0.30f;
+    float marginY = Screen.height * 0.40f;
+
+    // Se já está numa “safe area”, não faz nada
+    if (sp.x >= marginX && sp.x <= Screen.width - marginX &&
+        sp.y >= marginY && sp.y <= Screen.height - marginY)
+        return;
+
+    // Clamp do ponto do cursor para dentro da safe area
+    float clampedX = Mathf.Clamp(sp.x, marginX, Screen.width - marginX);
+    float clampedY = Mathf.Clamp(sp.y, marginY, Screen.height - marginY);
+
+    // Converte o ponto clampado para mundo (mesmo "depth" do cursor)
+    Vector3 desiredSp = new Vector3(clampedX, clampedY, sp.z);
+    Vector3 desiredWp = cam.ScreenToWorldPoint(desiredSp);
+
+    // Delta que a câmera precisa andar para o cursor ir para o ponto clampado
+    Vector3 delta = cursorWorldPos - desiredWp;
+
+    Vector3 targetCamPos = transform.position + delta;
+    targetCamPos.z = transform.position.z;
+
+    if (useLimits)
+    {
+        targetCamPos.x = Mathf.Clamp(targetCamPos.x, minX, maxX);
+        targetCamPos.y = Mathf.Clamp(targetCamPos.y, minY, maxY);
+    }
+
+    StopAllCoroutines();
+    StartCoroutine(SmoothFocus(targetCamPos));
+}
+
+
 }

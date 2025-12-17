@@ -13,7 +13,7 @@ public class TurnStateManager : MonoBehaviour
 
     [HideInInspector] public List<UnitMovement> cachedTargets = new List<UnitMovement>();
     [HideInInspector] public bool lastMoveWasActualMovement = false;
-    [HideInInspector] public UnitMovement selectedTarget = null;
+        [HideInInspector] public UnitMovement selectedTarget = null;
 
     void Start()
     {
@@ -156,11 +156,19 @@ public class TurnStateManager : MonoBehaviour
                 break;
 
             case TurnState.Aiming:
-                Debug.Log("🎯 Use 1–9 (ou Numpad 1–9) pra escolher alvo. ESC volta.");
+                // apos selecionar 1 alvo da lista
+                PanelMoveConfirm.Instance?.Hide();
+                HideAllPathLines();
+                PanelConfirmTarget.Instance?.Show(selectedTarget, 0);
+                SetState(TurnState.Aiming);
+                Debug.Log("🎯 Alvo selecionado. ENTER para confirmar ataque, ESC para voltar à lista.");
                 break;
 
             case TurnState.ConfirmTarget:
-                Debug.Log("🔥 (placeholder) ConfirmTarget: ENTER confirmaria ataque. ESC volta pra lista.");
+                PanelConfirmTarget.Instance?.Hide();
+                HideAllPathLines();
+                
+                Debug.Log("🔥 animação de tiro em andamento, calculos sendo feitos, aguarde...");
                 break;
 
             
@@ -248,7 +256,7 @@ public class TurnStateManager : MonoBehaviour
             Debug.Log("🟦 Apenas mover (Space). Turno encerrado sem atacar.");
             // “Apenas mover”
             PanelMoveConfirm.Instance?.Hide();
-            pathLine?.Hide();
+            HideAllPathLines();
             unit.FinishTurn(); // toca done, cadeado, etc
         }
         else

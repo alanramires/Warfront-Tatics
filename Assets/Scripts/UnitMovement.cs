@@ -22,7 +22,9 @@ public partial class UnitMovement : MonoBehaviour
 
     [Header("Undo History")]
     public List<Vector3Int> lastPathTaken = new List<Vector3Int>(); 
-    private int lastMoveCost = 0; // Para guardar o custo antes de pagar
+    
+    public int lastMoveCost = 0;
+
 
     [Header("Sistema de Combate")]
     public GameObject masterProjectilePrefab;

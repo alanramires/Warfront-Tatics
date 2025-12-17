@@ -139,9 +139,13 @@ public class CursorController : MonoBehaviour
         if (moveInputDetected && IsValidMove(newCell))
         {
             // Move!
+            Vector3 oldPos = transform.position;
             transform.position = mainGrid.CellToWorld(newCell);
             currentCell = newCell; 
             PlaySFX(sfxCursor);
+
+            cameraController.AdjustCameraForCursor(transform.position);
+
         }
 
         // 2. AÇÕES (ENTER / ESC / TAB / ESPAÇO)
@@ -243,15 +247,6 @@ public class CursorController : MonoBehaviour
         }
     }
 
-    // HANDLE ESPAÇO
-    void HandleSpaceKey()
-        {
-            if (selectedUnit == null) return;
-            var sm = selectedUnit.GetComponent<TurnStateManager>();
-            if (sm == null) return;
-
-            sm.ProcessSpace();
-        }
 
     UnitMovement FindUnitAt(Vector3Int cellPos)
     {
@@ -342,14 +337,13 @@ public class CursorController : MonoBehaviour
         }
 
         UnitMovement target = candidates[nextIndex];
+        Vector3 oldPos = transform.position;
         currentCell = target.currentCell;
         transform.position = mainGrid.CellToWorld(currentCell);
         PlaySFX(sfxCursor);
 
-        if (cameraController != null)
-        {
-            cameraController.FocusOn(transform.position, false); // false = faz um pan suave
-        }
+        cameraController.AdjustCameraForCursor(transform.position);
+
     }
 
 
