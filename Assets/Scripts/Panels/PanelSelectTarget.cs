@@ -205,7 +205,8 @@ public class PanelSelectTarget : MonoBehaviour
                     : t.name;
 
                 string hotkey = (i == 0) ? "ENTER" : i.ToString();
-                txt.text = $"[{hotkey}] {unitName} ({t.currentCell.y},{t.currentCell.x})";
+                //txt.text = $"[{hotkey}] {unitName}";
+                txt.text = $"[{hotkey}] {unitName} \n ({t.currentCell.y},{t.currentCell.x})";
                 txt.color = GetTeamColor(attacker != null ? attacker.teamId : 0);
             }
 

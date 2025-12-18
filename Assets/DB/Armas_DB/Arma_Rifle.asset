@@ -15,6 +15,7 @@ MonoBehaviour:
   weaponName: Rifle
   icon: {fileID: 21300000, guid: 725fc1f38ef986344ba9e0e48ba51b02, type: 3}
   projectileSprite: {fileID: 21300000, guid: a993bf2ba4691474485ad2c3d951ab1b, type: 3}
+  HUDSprite: {fileID: 21300000, guid: f4e75525235a34e4a8b93d5c932fd978, type: 3}
   trajectory: 0
   projectileSpeed: 20
   baseAttackPower: 4

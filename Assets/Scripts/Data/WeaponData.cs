@@ -11,6 +11,7 @@ public class WeaponData : ScriptableObject
 
     [Header("Visual do Projétil")]
     public Sprite projectileSprite; // <--- O desenho da bala/foguete (PNG)
+    public Sprite HUDSprite; // <--- O desenho da bala/foguete (PNG)
     public TrajectoryType trajectory; // <--- Reta ou Parábola?
     public float projectileSpeed = 20f; // Velocidade do voo
 

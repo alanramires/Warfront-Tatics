@@ -47,7 +47,7 @@ public class PanelMoveConfirm : MonoBehaviour
         if (btnPrimary)
         {
             var t = btnPrimary.GetComponentInChildren<TextMeshProUGUI>();
-            if (t) t.text = hasTargets ? "Mirar [Enter]" : "Mover [Enter]";
+            if (t) t.text = hasTargets ? "MIRAR [ENTER]" : "MOVER [ENTER]";
         }
 
         if (btnAltMove)

@@ -20,7 +20,7 @@ public class GridDebug : MonoBehaviour
             // Só coloca texto se tiver chão nesse hexágono
             if (tilemap.HasTile(pos))
             {
-                CreateLabel(pos);
+               CreateLabel(pos);
             }
         }
     }

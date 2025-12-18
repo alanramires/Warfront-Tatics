@@ -15,6 +15,7 @@ MonoBehaviour:
   weaponName: Bazooka (LAW)
   icon: {fileID: 21300000, guid: 052a6855e717e30418bbab599b911bbd, type: 3}
   projectileSprite: {fileID: 21300000, guid: 97a9f6ee9f99a754884e6621ce6d429f, type: 3}
+  HUDSprite: {fileID: 21300000, guid: 31e3d2b527b81c546bd06f21aa5f71de, type: 3}
   trajectory: 0
   projectileSpeed: 20
   baseAttackPower: 7

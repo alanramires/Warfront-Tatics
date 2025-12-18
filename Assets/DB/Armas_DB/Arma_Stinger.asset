@@ -15,6 +15,7 @@ MonoBehaviour:
   weaponName: Stinger
   icon: {fileID: 21300000, guid: 00973c24ba0778f438ad885d81f7bbeb, type: 3}
   projectileSprite: {fileID: 21300000, guid: 97a9f6ee9f99a754884e6621ce6d429f, type: 3}
+  HUDSprite: {fileID: 21300000, guid: fa8304e3c3552df4da3e4f5cc8d57053, type: 3}
   trajectory: 0
   projectileSpeed: 20
   baseAttackPower: 5

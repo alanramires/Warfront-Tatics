@@ -15,6 +15,7 @@ MonoBehaviour:
   weaponName: Roof Gun
   icon: {fileID: 21300000, guid: fb825b559e8e22c4096725b8e2374174, type: 3}
   projectileSprite: {fileID: 21300000, guid: a993bf2ba4691474485ad2c3d951ab1b, type: 3}
+  HUDSprite: {fileID: 21300000, guid: f4e75525235a34e4a8b93d5c932fd978, type: 3}
   trajectory: 0
   projectileSpeed: 20
   baseAttackPower: 6

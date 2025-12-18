@@ -48,7 +48,8 @@ public class UnitHUD : MonoBehaviour
             if (fuelText != null)
             {
                 // Opção A: Mostra "14/70" (Mais preciso)
-                fuelText.text = $"{current}/{max}";
+                fuelText.text = $"{current}";
+                //fuelText.text = $"{current}/{max}";
 
                 // Opção B: Mostra só o atual "14" (Mais limpo, se o max não importar tanto)
                 // fuelText.text = current.ToString();
@@ -123,23 +124,20 @@ public class UnitHUD : MonoBehaviour
         // 2. Cria os novos ícones
         foreach (WeaponConfig weapon in loadout)
         {
-            if (weapon.data == null) continue; 
+            if (weapon.data == null) continue;
 
             GameObject newSlot = Instantiate(weaponSlotPrefab, weaponContainer);
-            
-            Transform iconTransform = newSlot.transform.Find("Icon");
-            if (iconTransform != null)
-            {
-               // Image iconImg = iconTransform.GetComponent<Image>();
-              //  if (weapon.data.icon != null && iconImg != null) iconImg.sprite = weapon.data.icon; 
-            }
 
-            Transform ammoTransform = newSlot.transform.Find("Ammo");
-            if (ammoTransform != null)
+            var slot = newSlot.GetComponent<UIWeaponSlot>();
+            if (slot != null)
             {
-                TextMeshProUGUI ammoText = ammoTransform.GetComponent<TextMeshProUGUI>();
-                if (ammoText != null) ammoText.text = ":" + weapon.squadAttacks.ToString();
+                slot.Bind(weapon);
+            }
+            else
+            {
+                Debug.LogWarning("weaponSlotPrefab não tem UIWeaponSlot.cs anexado.", newSlot);
             }
         }
+
     }
 }
