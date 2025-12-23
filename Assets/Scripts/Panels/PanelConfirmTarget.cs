@@ -27,6 +27,7 @@ public class PanelConfirmTarget : MonoBehaviour
 
     private GameObject spawnedItem;
     private UnitMovement currentTarget;
+    private UnitMovement currentAttacker;
 
     private void Awake()
     {
@@ -47,12 +48,15 @@ public class PanelConfirmTarget : MonoBehaviour
     }
 
     public bool IsOpen => root != null && root.activeSelf;
-    public UnitMovement CurrentTarget => currentTarget;
+    //public UnitMovement CurrentTarget => currentTarget;
 
-    public void Show(UnitMovement target)
+    public void Show(UnitMovement attacker, UnitMovement target)
     {
+       // procura o root se não tiver setado, ou seja, o próprio GO/painel
         if (root == null) root = gameObject;
+        root.SetActive(true);
 
+        currentAttacker = attacker;
         currentTarget = target;
 
         root.SetActive(true);
@@ -68,14 +72,35 @@ public class PanelConfirmTarget : MonoBehaviour
         FillTargetItem(target);
         LayoutRebuilder.ForceRebuildLayoutImmediate(itemRoot);
 
+        // ✅ Preview correto: attacker REAL + target REAL
+        if (AttackPreviewLine.Instance != null && currentAttacker != null && currentTarget != null)
+        {
+            var grid = currentAttacker.boardCursor.mainGrid;
+
+            TrajectoryType traj = TrajectoryType.Straight;
+            if (currentAttacker.myWeapons != null && currentAttacker.myWeapons.Count > 0)
+            {
+                WeaponConfig w = currentAttacker.myWeapons[0]; // struct
+                if (w.data != null) traj = w.data.trajectory;  // Parabolic pro morteiro
+            }
+
+            AttackPreviewLine.Instance.Show(grid, currentAttacker.currentCell, currentTarget.currentCell, traj);
+            Debug.Log($"[ConfirmTarget] attacker={currentAttacker.currentCell} target={currentTarget.currentCell} traj={traj}");
+        }
+
+
+
     }
 
     public void Hide()
     {
         if (root == null) root = gameObject;
         root.SetActive(false);
+
+        currentAttacker = null;
         currentTarget = null;
     }
+
 
     public void Confirm()
     {
@@ -128,7 +153,7 @@ public class PanelConfirmTarget : MonoBehaviour
         if (img != null && target.TryGetComponent<SpriteRenderer>(out var sr))
         {
             img.sprite = sr.sprite;
-            img.color = GetTeamColor(target.teamId);
+            img.color = TeamUtils.GetColor(target.teamId);
         }
 
         // texto + cor
@@ -138,8 +163,8 @@ public class PanelConfirmTarget : MonoBehaviour
                 ? target.data.unitName
                 : target.name;
 
-            txt.text = $"{unitName} ({target.currentCell.x},{target.currentCell.y})";
-            txt.color = GetTeamColor(target.teamId);
+            txt.text = $"{unitName} ({target.currentCell.y},{target.currentCell.x})";
+            txt.color = TeamUtils.GetColor(target.teamId);
         }
 
         // header "Atacar <nome colorido>?"
@@ -149,21 +174,9 @@ public class PanelConfirmTarget : MonoBehaviour
                 ? target.data.unitName
                 : target.name;
 
-            var c = GetTeamColor(target.teamId);
+            var c = TeamUtils.GetColor(target.teamId);
             string hex = ColorUtility.ToHtmlStringRGB(c);
             headerText.text = $"Atacar <color=#{hex}>{unitName}</color>?";
         }
-    }
-
-    private Color GetTeamColor(int teamId)
-    {
-        return teamId switch
-        {
-            0 => GameColors.TeamGreen,
-            1 => GameColors.TeamRed,
-            2 => GameColors.TeamBlue,
-            3 => GameColors.TeamYellow,
-            _ => Color.white
-        };
     }
 }

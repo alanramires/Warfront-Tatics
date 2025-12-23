@@ -4,6 +4,7 @@ using System.Collections.Generic;
 [RequireComponent(typeof(LineRenderer))]
 public class PathPreviewLine : MonoBehaviour
 {
+    public static readonly List<PathPreviewLine> All = new List<PathPreviewLine>();
     public static PathPreviewLine Instance { get; private set; }
 
     [Header("Visual")]
@@ -15,6 +16,16 @@ public class PathPreviewLine : MonoBehaviour
     [SerializeField] private float zOffset = 0f;
 
     private LineRenderer lr;
+
+    private void OnEnable()
+    {
+        if (!All.Contains(this)) All.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        All.Remove(this);
+    }
 
     private void Awake()
     {
@@ -104,7 +115,7 @@ public class PathPreviewLine : MonoBehaviour
         //Debug.Log($"PathPreviewLine: Showing path with {path.Count} points: {string.Join(", ", path)}");
 
         // cor do time + alpha
-        Color c = GetTeamColor(unit.teamId);
+        Color c = TeamUtils.GetColor(unit.teamId);
         c.a = alpha;
 
         lr.startColor = c;
@@ -150,18 +161,6 @@ public class PathPreviewLine : MonoBehaviour
         if (lr == null) return;
         lr.enabled = false;
         lr.positionCount = 0;
-    }
-
-    private Color GetTeamColor(int teamId)
-    {
-        switch (teamId)
-        {
-            case 0: return GameColors.TeamGreen;
-            case 1: return GameColors.TeamRed;
-            case 2: return GameColors.TeamBlue;
-            case 3: return GameColors.TeamYellow;
-            default: return Color.white;
-        }
     }
 
     private void OnDestroy()

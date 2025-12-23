@@ -6,6 +6,8 @@ using System.Collections.Generic;
 [RequireComponent(typeof(TurnStateManager))] // Garante que o cérebro existe
 public partial class UnitMovement : MonoBehaviour 
 {
+    public static readonly List<UnitMovement> All = new List<UnitMovement>();
+
     [Header("DADOS DA UNIDADE (A FICHA)")]
     public UnitData data;
 
@@ -59,6 +61,16 @@ public partial class UnitMovement : MonoBehaviour
     private List<Vector3Int> validMoveTiles = new List<Vector3Int>();
     public List<Vector3Int> navigableTiles = new List<Vector3Int>(); 
 
+    void OnEnable()
+    {
+        if (!All.Contains(this)) All.Add(this);
+    }
+
+    void OnDisable()
+    {
+        All.Remove(this);
+    }
+
     void Start()
     {
         // 1. AUTO-CONEXÃO
@@ -75,17 +87,16 @@ public partial class UnitMovement : MonoBehaviour
         // 2. CONFIGURAÇÃO BASEADA NA FICHA
         if (data != null)
         {
-            Color teamColor = Color.white;
+            Color teamColor = TeamUtils.GetColor(teamId);
             Sprite specificSkin = null;
             currentFuel = data.maxFuel;
 
             switch (teamId)
             {
-                case 0: teamColor = GameColors.TeamGreen; specificSkin = data.spriteGreen; break;
-                case 1: teamColor = GameColors.TeamRed; specificSkin = data.spriteRed; break;
-                case 2: teamColor = GameColors.TeamBlue; specificSkin = data.spriteBlue; break;    
-                case 3: teamColor = GameColors.TeamYellow; specificSkin = data.spriteYellow; break;  
-                default: teamColor = Color.white; break;
+                case TeamUtils.Green:  specificSkin = data.spriteGreen; break;
+                case TeamUtils.Red:    specificSkin = data.spriteRed; break;
+                case TeamUtils.Blue:   specificSkin = data.spriteBlue; break;
+                case TeamUtils.Yellow: specificSkin = data.spriteYellow; break;
             }
 
             if (specificSkin != null) spriteRenderer.sprite = specificSkin;

@@ -1,9 +1,11 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class PanelMoveConfirm : MonoBehaviour
 {
+    public static readonly List<PanelMoveConfirm> All = new List<PanelMoveConfirm>();
     public static PanelMoveConfirm Instance { get; private set; }
 
     [Header("Root")]
@@ -17,6 +19,16 @@ public class PanelMoveConfirm : MonoBehaviour
     public Button btnPrimary;
     public Button btnAltMove;
     public Button btnCancel;
+
+    void OnEnable()
+    {
+        if (!All.Contains(this)) All.Add(this);
+    }
+
+    void OnDisable()
+    {
+        All.Remove(this);
+    }
 
     void Awake()
     {

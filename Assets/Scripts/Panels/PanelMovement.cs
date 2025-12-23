@@ -1,9 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 public class PanelMovement : MonoBehaviour
 {
+    public static readonly List<PanelMovement> All = new List<PanelMovement>();
     public static PanelMovement Instance { get; private set; }
 
     [Header("Root")]
@@ -18,6 +20,16 @@ public class PanelMovement : MonoBehaviour
     public Button cancelButton;
 
     private UnitMovement currentUnit;
+
+    private void OnEnable()
+    {
+        if (!All.Contains(this)) All.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        All.Remove(this);
+    }
 
     private void Awake()
     {
@@ -54,8 +66,10 @@ public class PanelMovement : MonoBehaviour
             actionText.text = GetActionVerb(unit.data.unitType);
 
         if (unitNameText != null)
-            unitNameText.text = $"{unit.data.unitName} ({GetTeamLabel(unit.teamId)})";
+        {
+            unitNameText.text = $"{unit.data.unitName} ({TeamUtils.GetName(unit.teamId)})";
             unitNameText.color = TeamUtils.GetColor(unit.teamId);
+        }
 
         root.SetActive(true);
     }
@@ -83,17 +97,6 @@ public class PanelMovement : MonoBehaviour
         }
     }
 
-    private string GetTeamLabel(int teamId)
-    {
-        switch (teamId)
-        {
-            case 0: return "verde";
-            case 1: return "vermelho";
-            case 2: return "azul";
-            case 3: return "amarelo";
-            default: return $"time {teamId}";
-        }
-    }
 
     private void OnClickMove()
     {

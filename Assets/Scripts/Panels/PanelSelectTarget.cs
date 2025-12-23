@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public class PanelSelectTarget : MonoBehaviour
 {
+    public static readonly List<PanelSelectTarget> All = new List<PanelSelectTarget>();
     public static PanelSelectTarget Instance { get; private set; }
 
     [Header("Refs (arraste no Inspector)")]
@@ -28,6 +29,16 @@ public class PanelSelectTarget : MonoBehaviour
 
     public event Action<UnitMovement> OnTargetChosen;
 
+    private void OnEnable()
+    {
+        if (!All.Contains(this)) All.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        All.Remove(this);
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -36,9 +47,6 @@ public class PanelSelectTarget : MonoBehaviour
             enabled = false;
             return;
         }
-        Instance = this;
-
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
         if (root == null) root = gameObject;
@@ -207,7 +215,7 @@ public class PanelSelectTarget : MonoBehaviour
                 string hotkey = (i == 0) ? "ENTER" : i.ToString();
                 //txt.text = $"[{hotkey}] {unitName}";
                 txt.text = $"[{hotkey}] {unitName} \n ({t.currentCell.y},{t.currentCell.x})";
-                txt.color = GetTeamColor(attacker != null ? attacker.teamId : 0);
+                txt.color = TeamUtils.GetColor(attacker != null ? attacker.teamId : 0);
             }
 
         }
@@ -220,19 +228,5 @@ public class PanelSelectTarget : MonoBehaviour
             if (spawned[i] != null) Destroy(spawned[i]);
         }
         spawned.Clear();
-    }
-
-    private Color GetTeamColor(int teamId)
-    {
-        // Usa suas cores globais
-        // (GameColors está no GameEnums.cs) :contentReference[oaicite:1]{index=1}
-        switch (teamId)
-        {
-            case 0: return GameColors.TeamGreen;
-            case 1: return GameColors.TeamRed;
-            case 2: return GameColors.TeamBlue;
-            case 3: return GameColors.TeamYellow;
-            default: return Color.white;
-        }
     }
 }

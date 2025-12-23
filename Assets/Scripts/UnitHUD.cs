@@ -12,37 +12,40 @@ public class UnitHUD : MonoBehaviour
     // MUDANÇA 1: Agora é do tipo Image, para podermos pintar
     public Image lockIcon; 
 
-    // --- NOVO: A BARRA DE COMBUSTÍVEL ---
+    // --- A BARRA DE COMBUSTÍVEL ---
     [Header("Combustível")]
     public Image fuelFillImage; // Arraste o "FuelBar_Fill" aqui
-    public TextMeshProUGUI fuelText; // <--- NOVO: Arraste o texto aqui
+    public TextMeshProUGUI fuelText; // Arraste o texto que mostra o combustível
 
-    // --- NOVO: PALETA DE CORES ---
+    // --- PALETA DE CORES ---
     [Header("Configuração de Cores")]
-    public Color fuelSafeColor = new Color(0.0f, 0.5f, 0.0f); // Verde Escuro padrão
-    public Color fuelDangerColor = Color.red;
+    public Color fuelSafeColor = new Color(1.0f, 0.5f, 0.0f); // Laranja
+    public Color fuelWarningColor = Color.yellow; // Amarelo
+    public Color fuelDangerColor = Color.red; // Vermelho
     
     [Header("Armas (Opcional por enquanto)")]
     public Transform weaponContainer;    
     public GameObject weaponSlotPrefab;  
 
-    // --- NOVO: ATUALIZA A BARRA ---
+    // --- ATUALIZA A BARRA DE AUTONOMIA ---
     public void UpdateFuel(int current, int max)
     {
         if (fuelFillImage != null)
         {
-            // O ERRO PROVAVELMENTE ESTÁ AQUI:
-            // Errado: float pct = current / max;  <-- Dá 0
             
-            // Certo: Tem que ter (float) antes
+           
             float pct = (float)current / max; 
             //Debug.Log($"Gasolina: {current}/{max} = {pct}"); // <--- OLHE O CONSOLE
 
             fuelFillImage.fillAmount = pct; // Atualiza a barra
 
-            // Muda a cor
-            if (pct <= 0.2f) fuelFillImage.color = fuelDangerColor;
-            else fuelFillImage.color = fuelSafeColor;
+            // Muda a cor baseado na porcentagem
+            if (pct <= 0.25f)
+                fuelFillImage.color = fuelDangerColor;
+            else if (pct <= 0.34f)
+                fuelFillImage.color = fuelWarningColor;
+            else
+                fuelFillImage.color = fuelSafeColor;
 
             // --- ATUALIZA O TEXTO ---
             if (fuelText != null)
@@ -50,9 +53,6 @@ public class UnitHUD : MonoBehaviour
                 // Opção A: Mostra "14/70" (Mais preciso)
                 fuelText.text = $"{current}";
                 //fuelText.text = $"{current}/{max}";
-
-                // Opção B: Mostra só o atual "14" (Mais limpo, se o max não importar tanto)
-                // fuelText.text = current.ToString();
             }
         }
     }

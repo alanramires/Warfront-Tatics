@@ -86,7 +86,7 @@ public class UnitAttack : MonoBehaviour
         teamId = movement.teamId;
 
         // Todas as unidades em cena
-        UnitMovement[] allUnits = FindObjectsByType<UnitMovement>(FindObjectsSortMode.None);
+        var allUnits = UnitMovement.All;
 
         Debug.Log($"[UnitAttack] GetValidTargets: hasMoved={hasMoved}, armas={weaponSource.Count}, meuTime={teamId}");
 

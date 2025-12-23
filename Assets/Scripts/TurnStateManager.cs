@@ -256,11 +256,19 @@ public class TurnStateManager : MonoBehaviour
     }
 
     // DEFINIR ESTADO
+    
     public void SetState(TurnState newState)
-{
-    Debug.Log($"---------------> TurnState: {currentState} -> {newState}", this);
-    currentState = newState;
-}
+    {
+        Debug.Log($"---------------> TurnState: {currentState} -> {newState}", this);
+        if (currentState == TurnState.ConfirmTarget && newState != TurnState.ConfirmTarget)
+        {
+            if (PanelConfirmTarget.Instance) PanelConfirmTarget.Instance.Hide();
+            if (AttackPreviewLine.Instance) AttackPreviewLine.Instance.Hide();
+        }
+
+        currentState = newState;
+    }
+
 
 
     // ========================================================
@@ -303,25 +311,29 @@ public class TurnStateManager : MonoBehaviour
 
     void HideAllMovementPanels()
     {
-        foreach (var p in FindObjectsByType<PanelMovement>(FindObjectsSortMode.None))
+        var panels = new List<PanelMovement>(PanelMovement.All);
+        foreach (var p in panels)
             if (p != null) p.Hide();
     }
 
     void HideAllConfirmMovePanels()
     {
-        foreach (var p in FindObjectsByType<PanelMoveConfirm>(FindObjectsSortMode.None))
+        var panels = new List<PanelMoveConfirm>(PanelMoveConfirm.All);
+        foreach (var p in panels)
             if (p != null) p.Hide();
     }
 
     void HideAllSelectTargetPanels()
     {
-        foreach (var p in FindObjectsByType<PanelSelectTarget>(FindObjectsSortMode.None))
+        var panels = new List<PanelSelectTarget>(PanelSelectTarget.All);
+        foreach (var p in panels)
             if (p != null) p.Hide();
     }
 
     void HideAllPathLines()
     {
-        foreach (var p in FindObjectsByType<PathPreviewLine>(FindObjectsSortMode.None))
+        var panels = new List<PathPreviewLine>(PathPreviewLine.All);
+        foreach (var p in panels)
             if (p != null) p.Hide();
     }
 
@@ -394,10 +406,69 @@ public class TurnStateManager : MonoBehaviour
 
         // abre confirm
         int idx = (PanelSelectTarget.Instance != null) ? PanelSelectTarget.Instance.LastChosenIndex : 0;
-        PanelConfirmTarget.Instance?.Show(target);
+        PanelConfirmTarget.Instance?.Show(unit,target);
         SetState(TurnState.ConfirmTarget);
 
     }
+
+    // ========================================================================
+    // 🎯 CONFIRMAR ALVO (EnterConfirmTarget)
+    // ========================================================================
+    public void EnterConfirmTarget(UnitMovement target)
+    {
+        if (unit == null) unit = GetComponent<UnitMovement>();
+
+        SetState(TurnState.ConfirmTarget);
+
+        if (PanelConfirmTarget.Instance != null)
+        {
+            PanelConfirmTarget.Instance.OnConfirm -= ConfirmAttack;
+            PanelConfirmTarget.Instance.OnCancel  -= CancelConfirmTarget;
+            PanelConfirmTarget.Instance.OnConfirm += ConfirmAttack;
+            PanelConfirmTarget.Instance.OnCancel  += CancelConfirmTarget;
+
+            PanelConfirmTarget.Instance.Show(unit, target);
+        }
+
+        ShowAttackPreview(target);
+    }
+
+    private void ShowAttackPreview(UnitMovement target)
+    {
+        if (AttackPreviewLine.Instance == null) return;
+        if (unit == null || unit.boardCursor == null || unit.boardCursor.mainGrid == null) return;
+        if (target == null) return;
+
+        var grid = unit.boardCursor.mainGrid;
+        var traj = GetPrimaryTrajectory(unit);
+        AttackPreviewLine.Instance.Show(grid, unit.currentCell, target.currentCell, traj);
+    }
+
+    private static TrajectoryType GetPrimaryTrajectory(UnitMovement attacker)
+    {
+        if (attacker != null && attacker.myWeapons != null && attacker.myWeapons.Count > 0)
+        {
+            var cfg = attacker.myWeapons[0];
+            if (cfg.data != null)
+                return cfg.data.trajectory;
+        }
+        return TrajectoryType.Straight;
+    }
+
+    private void CancelConfirmTarget()
+    {
+        if (PanelConfirmTarget.Instance) PanelConfirmTarget.Instance.Hide();
+        if (AttackPreviewLine.Instance) AttackPreviewLine.Instance.Hide();
+        SetState(TurnState.Aiming);
+    }
+
+    private void ConfirmAttack()
+    {
+        if (PanelConfirmTarget.Instance) PanelConfirmTarget.Instance.Hide();
+        if (AttackPreviewLine.Instance) AttackPreviewLine.Instance.Hide();
+        // depois você pluga aqui o disparo real
+    }
+
 
 
 }

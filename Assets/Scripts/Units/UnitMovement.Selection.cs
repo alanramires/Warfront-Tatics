@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 public partial class UnitMovement : MonoBehaviour
 {
+    private Coroutine blinkRoutine;
     // ========================================================================
     // 🕹️ INPUT DELEGADO (O Cérebro Decide)
     // ========================================================================
@@ -41,7 +42,14 @@ public partial class UnitMovement : MonoBehaviour
         pendingCost = 0;
         lastMoveCost = 0;
 
-        StartCoroutine("BlinkRoutine");
+        // Para qualquer rotina de piscar anterior
+        if (blinkRoutine != null)
+        {
+            StopCoroutine(blinkRoutine);
+            blinkRoutine = null;
+        }
+
+        blinkRoutine = StartCoroutine(BlinkRoutine());
         ShowRange();
         if (boardCursor) boardCursor.LockMovement(navigableTiles);
     }
@@ -50,7 +58,11 @@ public partial class UnitMovement : MonoBehaviour
     public void DeselectUnit()
     {
         ClearVisuals();
-        StopCoroutine("BlinkRoutine");
+        if (blinkRoutine != null)
+        {
+            StopCoroutine(blinkRoutine);
+            blinkRoutine = null;
+        }
         if (spriteRenderer) spriteRenderer.color = originalColor;
         if (boardCursor) boardCursor.ClearSelection();
     }

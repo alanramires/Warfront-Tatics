@@ -160,7 +160,7 @@ public partial class UnitMovement : MonoBehaviour
     HashSet<Vector3Int> GetMovementBlockers()
     {
         HashSet<Vector3Int> blockers = new HashSet<Vector3Int>();
-        UnitMovement[] allUnits = FindObjectsByType<UnitMovement>(FindObjectsSortMode.None);
+        var allUnits = UnitMovement.All;
         foreach (UnitMovement unit in allUnits)
         {
             if (unit == this) continue;
@@ -172,7 +172,7 @@ public partial class UnitMovement : MonoBehaviour
     HashSet<Vector3Int> GetStoppingBlockers()
     {
         HashSet<Vector3Int> blockers = new HashSet<Vector3Int>();
-        UnitMovement[] allUnits = FindObjectsByType<UnitMovement>(FindObjectsSortMode.None);
+        var allUnits = UnitMovement.All;
         foreach (UnitMovement unit in allUnits)
         {
             if (unit == this) continue;

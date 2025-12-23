@@ -35,6 +35,7 @@ public class CursorController : MonoBehaviour
     void Start() 
     {
         audioSource = GetComponent<AudioSource>();
+        // Inicializa a posição do cursor na célula atual
         transform.position = mainGrid.CellToWorld(currentCell);
 
         if (cameraController == null && Camera.main != null)
@@ -250,7 +251,7 @@ public class CursorController : MonoBehaviour
 
     UnitMovement FindUnitAt(Vector3Int cellPos)
     {
-        UnitMovement[] allUnits = FindObjectsByType<UnitMovement>(FindObjectsSortMode.None);
+        var allUnits = UnitMovement.All;
         foreach (var unit in allUnits)
         {
             if (unit.currentCell == cellPos) return unit;
@@ -284,7 +285,7 @@ public class CursorController : MonoBehaviour
         ClearSelection();
 
         // Coleta todas as unidades válidas na cena
-        UnitMovement[] allUnits = FindObjectsByType<UnitMovement>(FindObjectsSortMode.None);
+        var allUnits = UnitMovement.All;
         List<UnitMovement> candidates = new List<UnitMovement>();
 
         int currentTeamId = 0; // TODO: integrar com sistema de turnos futuramente

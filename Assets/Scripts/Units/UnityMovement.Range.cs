@@ -42,7 +42,6 @@ public partial class UnitMovement : MonoBehaviour
 
         public bool IsValidDestination(Vector3Int pos)
     {
-        // O Pathfinding já calculou que esta lista não contém tiles de aliados ou inimigos
-        return validMoveTiles.Contains(pos); 
+        return IsValidMove(pos);
     }
 }
