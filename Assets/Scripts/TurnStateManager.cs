@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 public class TurnStateManager : MonoBehaviour
@@ -10,10 +11,9 @@ public class TurnStateManager : MonoBehaviour
     public UnitMovement unit;
     public PathPreviewLine pathLine;
 
-
     [HideInInspector] public List<UnitMovement> cachedTargets = new List<UnitMovement>();
     [HideInInspector] public bool lastMoveWasActualMovement = false;
-        [HideInInspector] public UnitMovement selectedTarget = null;
+    [HideInInspector] public UnitMovement selectedTarget = null;
 
     void Start()
     {
@@ -53,7 +53,7 @@ public class TurnStateManager : MonoBehaviour
         HideAllSelectTargetPanels();
 
         // Scan
-        UnitAttack attack = unit.GetComponent<UnitAttack>();
+        TargetScanner attack = unit.GetComponent<TargetScanner>();
         if (attack != null)
         {
             cachedTargets = attack.GetValidTargets(hasMoved);
@@ -117,7 +117,7 @@ public class TurnStateManager : MonoBehaviour
                     unit.MoveDirectlyToMenu(); // no fim chama EnterMoveConfirmation(false)
                 }
                 else
-                {
+                    {
                     if (unit.IsValidDestination(cursorPosition))
                     {
                         HideAllMovementPanels();
@@ -143,7 +143,7 @@ public class TurnStateManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("👁️ Abrindo lista de alvos (ENTER=0, 1–9). ESC volta pro ConfirmMove.");
+                    Debug.Log("👁️ Alvos detectados no alcance das armas...");
 
                     // importante: ao entrar no Aiming, some com o pathline do ConfirmMove
                     HideAllPathLines();
@@ -158,23 +158,39 @@ public class TurnStateManager : MonoBehaviour
 
 
             case TurnState.Aiming:
-                Debug.Log("🎯 Alvo selecionado. ENTER para confirmar ataque, ESC para voltar à lista.");
+                Debug.Log("🎯 Escolha um alvo da lista");
                 break;
 
             case TurnState.ConfirmTarget:
+                if (selectedTarget == null)
+                {
+                    Debug.Log("⚠️ Sem alvo selecionado. Voltando pra lista.");
+                    SetState(TurnState.Aiming);
+                    ShowSelectTargetPanel();
+                    break;
+                }
+
+                Debug.Log("🔥 Alvo selecionado. ENTER para confirmar ataque, ESC para voltar à lista");
                 PanelConfirmTarget.Instance?.Hide();
                 HideAllSelectTargetPanels();
                 HideAllPathLines();
 
-                Debug.Log("🔥 balas voando, aguarde...");
+                SetState(TurnState.Attacking);                
 
-                // placeholder: por enquanto só encerra o turno (pra não travar o fluxo)
-                unit.FinishTurn();
-                SetState(TurnState.Finished);
+                StartCoroutine(Combat.ResolveAttackWeapon0_MVP(
+                    unit,
+                    selectedTarget, // usa o seu campo já existente
+                    onDone: () =>
+                    {
+                        // Se quiser: se faltou munição, você pode voltar pra ConfirmTarget/Aiming aqui.
+                        // No MVP eu encerraria o turno só quando realmente atacou.
+                        unit.FinishTurn();
+                        SetState(TurnState.Finished);
+                    }
+                ));
                 break;
 
-
-            
+           
 
             case TurnState.Finished:
                 if (cursorPosition == unit.currentCell)
@@ -252,6 +268,11 @@ public class TurnStateManager : MonoBehaviour
                 SetState(TurnState.None);
                 unit.boardCursor?.ClearSelection();
                 break;
+
+            case TurnState.Attacking:
+            // nada acontece
+            break;
+
         }
     }
 
@@ -259,7 +280,10 @@ public class TurnStateManager : MonoBehaviour
     
     public void SetState(TurnState newState)
     {
-        Debug.Log($"---------------> TurnState: {currentState} -> {newState}", this);
+        if (currentState != newState)
+        {
+            Debug.Log($"---------------> TurnState: {currentState} -> {newState}", this);
+        }
         if (currentState == TurnState.ConfirmTarget && newState != TurnState.ConfirmTarget)
         {
             if (PanelConfirmTarget.Instance) PanelConfirmTarget.Instance.Hide();
@@ -377,6 +401,8 @@ public class TurnStateManager : MonoBehaviour
         return cost;
     }
 
+
+
     // =========================================================
     // SelectTarget callbacks (defensivos)
     // =========================================================
@@ -406,6 +432,9 @@ public class TurnStateManager : MonoBehaviour
 
         // abre confirm
         int idx = (PanelSelectTarget.Instance != null) ? PanelSelectTarget.Instance.LastChosenIndex : 0;
+        
+        // armazena o alvo escolhido
+        selectedTarget = target;
         PanelConfirmTarget.Instance?.Show(unit,target);
         SetState(TurnState.ConfirmTarget);
 

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
 
@@ -13,13 +13,18 @@ public class TerrainManager : MonoBehaviour
         public string name;     // Nome (ex: "Floresta")
         public TileBase tile;   // O arquivo do Tile
         public TerrainCategory category; // A categoria (que define o custo)
+        public PositionProfile positionProfile; // DPQ (FavorÃ¡vel/Melhorado/PadrÃ£o/DesfavorÃ¡vel)
+
     }
 
-    public List<TerrainData> terrainConfig; // Lista para configurar no Inspector
-    public Tilemap gameBoard; // Referência ao chão
+    public List<TerrainProfile> TerrainProfiles; // arrasta seus .asset aqui
 
-    // Dicionário para busca rápida
+    public Tilemap gameBoard; // ReferÃªncia ao chÃ£o
+
+    // DicionÃ¡rio para busca rÃ¡pida
     private Dictionary<TileBase, TerrainCategory> categoryMap = new Dictionary<TileBase, TerrainCategory>();
+    private Dictionary<TileBase, int> defenseBonusMap = new Dictionary<TileBase, int>();
+
 
     void Awake()
     {
@@ -33,28 +38,40 @@ public class TerrainManager : MonoBehaviour
     void InitializeCostMap()
     {
         categoryMap.Clear();
-        foreach (var data in terrainConfig)
+        defenseBonusMap.Clear();
+
+        if (TerrainProfiles == null) return;
+
+        foreach (var def in TerrainProfiles)
         {
-            if (data.tile != null && !categoryMap.ContainsKey(data.tile))
-            {
-                categoryMap.Add(data.tile, data.category);
-            }
+            if (def == null || def.tile == null) continue;
+
+            // Categoria (movimento)
+            categoryMap[def.tile] = def.category;
+
+            // DPQ -> bÃ´nus de defesa
+            int bonus = 0;
+            if (def.positionProfile != null)
+                bonus = def.positionProfile.defenseBonus;
+
+            defenseBonusMap[def.tile] = bonus;
         }
     }
 
-    // A LÓGICA DE OURO: Recebe o tile E o tipo da unidade
-    // Função que o Pathfinding vai chamar
+
+    // A LÃ“GICA DE OURO: Recebe o tile E o tipo da unidade
+    // FunÃ§Ã£o que o Pathfinding vai chamar
     public int GetMovementCost(UnityEngine.Vector3Int cellPos, UnitType unitType)
     {
         TileBase tile = gameBoard.GetTile(cellPos);
         if (tile == null) return 999; // Fora do mapa
 
-        // Se não configurou, assume Planície (Custo 1)
+        // Se nÃ£o configurou, assume PlanÃ­cie (Custo 1)
         if (!categoryMap.ContainsKey(tile)) return 1;
 
         TerrainCategory terrain = categoryMap[tile];
 
-        // --- CLASSIFICAÇÃO DA UNIDADE ---
+        // --- CLASSIFICAÃ‡ÃƒO DA UNIDADE ---
         bool isAir = (unitType == UnitType.JetFighter || unitType == UnitType.Helicopter || unitType == UnitType.Plane);
         bool isSea = (unitType == UnitType.Ship || unitType == UnitType.Sub);
         bool isInfantry = (unitType == UnitType.Infantry);
@@ -63,26 +80,26 @@ public class TerrainManager : MonoBehaviour
         switch (terrain)
         {
             case TerrainCategory.Plain:
-                // Planície, Praia, Asfalto: Custo padrão para todos.
+                // PlanÃ­cie, Praia, Asfalto: Custo padrÃ£o para todos.
                 return 1; 
 
             case TerrainCategory.Forest:
-                // Aéreo e Marítimo ignoram a floresta (custo 1)
+                // AÃ©reo e MarÃ­timo ignoram a floresta (custo 1)
                 if (isAir || isSea) return 1;
                 
-                // Terrestre aplica a regra: Infantaria sofre menos (1), Veículos sofrem mais (2)
+                // Terrestre aplica a regra: Infantaria sofre menos (1), VeÃ­culos sofrem mais (2)
                 return isInfantry ? 1 : 2;
 
             case TerrainCategory.Mountain:
-                // Aéreo ignora, Marítimo bloqueia
+                // AÃ©reo ignora, MarÃ­timo bloqueia
                 if (isAir) return 1;
                 if (isSea) return 99;
                 
-                // Terrestre aplica a regra: Infantaria (2), Veículos (6)
+                // Terrestre aplica a regra: Infantaria (2), VeÃ­culos (6)
                 return isInfantry ? 2 : 6;
 
             case TerrainCategory.Water:
-                // Apenas unidades marítimas e aéreas podem entrar (Custo 1)
+                // Apenas unidades marÃ­timas e aÃ©reas podem entrar (Custo 1)
                 if (isAir || isSea) return 1;
                 return 99; // Bloqueio total para Terrestres
                 
@@ -93,4 +110,17 @@ public class TerrainManager : MonoBehaviour
                 return 1;
         }
     }
+
+    public int GetDefenseBonus(Vector3Int cellPos)
+    {
+        TileBase tile = gameBoard.GetTile(cellPos);
+        if (tile == null) return 0;
+
+        if (defenseBonusMap.TryGetValue(tile, out int bonus))
+            return bonus;
+
+        return 0;
+    }
+
+
 }

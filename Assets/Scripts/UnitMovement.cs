@@ -1,25 +1,25 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Tilemaps; 
 using System.Collections;   
 using System.Collections.Generic; 
 
-[RequireComponent(typeof(TurnStateManager))] // Garante que o cérebro existe
+[RequireComponent(typeof(TurnStateManager))] // Garante que o cÃ©rebro existe
 public partial class UnitMovement : MonoBehaviour 
 {
     public static readonly List<UnitMovement> All = new List<UnitMovement>();
 
     [Header("DADOS DA UNIDADE (A FICHA)")]
-    public UnitData data;
+    public UnitProfile data;
 
     [Header("Interface")]
     public UnitHUD hud;
-    public TurnStateManager stateManager; // Link com o Cérebro
+    public TurnStateManager stateManager; // Link com o CÃ©rebro
 
-    [Header("Combustível")]
+    [Header("CombustÃ­vel")]
     public int currentFuel;
     private int pendingCost = 0;
 
-    // ✅ expõe só leitura pro painel/TurnStateManager
+    // âœ… expÃµe sÃ³ leitura pro painel/TurnStateManager
     public int PendingCost => pendingCost;
 
     [Header("Undo History")]
@@ -33,10 +33,10 @@ public partial class UnitMovement : MonoBehaviour
     public int currentHP;        
     public List<WeaponConfig> myWeapons = new List<WeaponConfig>();
 
-    [Header("Configurações de Time")]
+    [Header("ConfiguraÃ§Ãµes de Time")]
     public int teamId = 0; 
 
-    [Header("Referências Gerais")]
+    [Header("ReferÃªncias Gerais")]
     public CursorController boardCursor; 
     public Tilemap rangeTilemap; 
     public Vector3Int currentCell = new Vector3Int(0, 0, 0); 
@@ -52,7 +52,7 @@ public partial class UnitMovement : MonoBehaviour
     [Header("Estado do Turno")]
     public bool isFinished = false; 
         
-    // Necessário ser public para o Undo do TurnStateManager ler
+    // NecessÃ¡rio ser public para o Undo do TurnStateManager ler
     public Vector3Int posicaoOriginal; 
 
     private SpriteRenderer spriteRenderer;
@@ -73,7 +73,7 @@ public partial class UnitMovement : MonoBehaviour
 
     void Start()
     {
-        // 1. AUTO-CONEXÃO
+        // 1. AUTO-CONEXÃƒO
         if (boardCursor == null) boardCursor = FindFirstObjectByType<CursorController>();
         spriteRenderer = GetComponent<SpriteRenderer>(); 
         stateManager = GetComponent<TurnStateManager>(); 
@@ -84,7 +84,7 @@ public partial class UnitMovement : MonoBehaviour
             if (mapObj != null) rangeTilemap = mapObj.GetComponent<Tilemap>();
         }
 
-        // 2. CONFIGURAÇÃO BASEADA NA FICHA
+        // 2. CONFIGURAÃ‡ÃƒO BASEADA NA FICHA
         if (data != null)
         {
             Color teamColor = TeamUtils.GetColor(teamId);
@@ -131,8 +131,8 @@ public partial class UnitMovement : MonoBehaviour
             transform.position = worldPos;
         }
 
-        // Inicializa o estado no Manager
-        if(stateManager) stateManager.SetState(TurnState.None);
+        // Inicializa o estado no Manager (removido, pois TurnStateManager jÃ¡ faz isso)
+        // if(stateManager) stateManager.SetState(TurnState.None);
     }
 
     void Update()
@@ -146,8 +146,8 @@ public partial class UnitMovement : MonoBehaviour
 
         if (!isFinished && stateManager.currentState == TurnState.Finished)
         {
-            Debug.Log("⚡ GOD MODE DETECTADO: Ressuscitando unidade...");
-            ResetTurn(); // Força o reset completo (Estado -> None, Cor -> Original)
+            Debug.Log("âš¡ GOD MODE DETECTADO: Ressuscitando unidade...");
+            ResetTurn(); // ForÃ§a o reset completo (Estado -> None, Cor -> Original)
         }
     }
 

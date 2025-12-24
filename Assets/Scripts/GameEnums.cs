@@ -4,6 +4,7 @@ using UnityEngine;
 
 public enum UnitType 
 { 
+    // A lista completa de tipos de unidade
     Infantry, 
     Vehicle,
     Artillery,
@@ -17,23 +18,26 @@ public enum UnitType
 
 public enum TerrainCategory
 {
+    // A lista completa de categorias de terreno
     Plain,    
     Forest,   
     Mountain, 
+    Beach,
     Water,    
     Obstacle  
 }
 
-// AQUI ESTÁ A CORREÇÃO: A lista completa de marchas
+// Maquina de estados do turno
 public enum TurnState
 {
-    None,
-    Selected,      // unidade escolhida, ainda não se mexeu
-    Inspected,
-    Moving,        // animação de movimento rolando
+    None,        // estado inicial, nenhum selecionado
+    Selected,    // unidade escolhida, ainda não se mexeu
+    Inspected,   // vendo info de outra unidade
+    Moving,      // animação de movimento rolando
     ConfirmMove,   // já moveu (ou clicou nela mesma) e está “em pré-visualização”
-    Aiming,        // Mirando em um alvo (próxima etapa)
+    Aiming,     // Mirando em um alvo (próxima etapa)
     ConfirmTarget, // Confirmação de tiro (depois)
+    Attacking,    // animação de ataque rolando
     Finished       // já agiu nesse turno
 }
 

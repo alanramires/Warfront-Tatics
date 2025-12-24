@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,11 +8,12 @@ public class UIWeaponSlot : MonoBehaviour
     [SerializeField] private Image iconImage;
     [SerializeField] private TextMeshProUGUI ammoText;
 
+    // Essa funÃ§Ã£o vincula os dados da arma aos elementos da UI
     public void Bind(WeaponConfig weapon)
     {
         if (weapon.data == null) return;
 
-        // MVP: por enquanto usa o ícone que você já tem no WeaponData
+        // MVP: por enquanto usa o Ã­cone que vocÃª jÃ¡ tem no WeaponProfile
         if (iconImage != null)
             iconImage.sprite = weapon.data.HUDSprite;
 
@@ -20,3 +21,4 @@ public class UIWeaponSlot : MonoBehaviour
             ammoText.text = "x" + weapon.squadAttacks.ToString();
     }
 }
+
