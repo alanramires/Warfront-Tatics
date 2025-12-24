@@ -20,7 +20,7 @@ public class GridDebug : MonoBehaviour
             // Só coloca texto se tiver chão nesse hexágono
             if (tilemap.HasTile(pos))
             {
-               CreateLabel(pos);
+            //   CreateLabel(pos);
             }
         }
     }
@@ -41,7 +41,7 @@ public class GridDebug : MonoBehaviour
         if (textComp != null)
         {
             // Exibe coordenada "Axial" (X, Y)
-            textComp.text = $"{pos.y},{pos.x}";
+           // textComp.text = $"{pos.y},{pos.x}";
         }
     }
 }

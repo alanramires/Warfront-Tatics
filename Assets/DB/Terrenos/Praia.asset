@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 934a38a15aaf78048bc83acd5fd4ed09, type: 3}
   m_Name: Praia
   m_EditorClassIdentifier: Assembly-CSharp::TerrainDef
-  terrainName: 
-  tile: {fileID: 0}
-  category: 0
-  positionProfile: {fileID: 0}
+  terrainName: Praia
+  tile: {fileID: 11400000, guid: a4e707b40b5cdec4a877eda8c5c728ab, type: 2}
+  category: 3
+  positionProfile: {fileID: 11400000, guid: 699fab1d05ac12e44a8395e91f1d021d, type: 2}

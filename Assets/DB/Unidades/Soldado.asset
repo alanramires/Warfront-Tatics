@@ -21,7 +21,7 @@ MonoBehaviour:
   unitType: 0
   moveRange: 3
   maxHP: 10
-  defense: 8
+  defense: 10
   maxFuel: 99
   weapons:
   - data: {fileID: 11400000, guid: 1a4c9cd602ef00c4fbdd5435ddb7659e, type: 2}

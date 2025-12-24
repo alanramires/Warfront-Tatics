@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class TerrainManager : MonoBehaviour
 {
@@ -24,39 +27,102 @@ public class TerrainManager : MonoBehaviour
     // DicionÃ¡rio para busca rÃ¡pida
     private Dictionary<TileBase, TerrainCategory> categoryMap = new Dictionary<TileBase, TerrainCategory>();
     private Dictionary<TileBase, int> defenseBonusMap = new Dictionary<TileBase, int>();
+    private Dictionary<TileBase, int> qualityPointsMap = new Dictionary<TileBase, int>();
+
+    [SerializeField] private string terrainsFolder = "Assets/DB/Terrenos";
 
 
+    // Editor-only: Auto load TerrainProfiles from folder
+    #if UNITY_EDITOR
+    private void OnValidate()
+    {
+        AutoLoadTerrainProfilesFromFolder();
+    }
+
+    [ContextMenu("AutoLoad TerrainProfiles (Assets/DB/Terrenos)")]
+    private void AutoLoadTerrainProfilesFromFolder()
+    {
+        if (string.IsNullOrWhiteSpace(terrainsFolder)) return;
+
+        string[] guids = AssetDatabase.FindAssets("t:TerrainProfile", new[] { terrainsFolder });
+
+        if (TerrainProfiles == null)
+            TerrainProfiles = new List<TerrainProfile>();
+        else
+            TerrainProfiles.Clear();
+
+        foreach (var guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            var asset = AssetDatabase.LoadAssetAtPath<TerrainProfile>(path);
+            if (asset != null)
+                TerrainProfiles.Add(asset);
+        }
+
+        if (!Application.isPlaying)
+            EditorUtility.SetDirty(this);
+    }
+    #endif
+
+    // Inicializa os dicionários de custo
     void Awake()
     {
-        // Configura o Singleton
+        // Singleton: Uma instância global
         if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        else { Destroy(gameObject); return; }
+
+        int count = (TerrainProfiles == null) ? 0 : TerrainProfiles.Count;
+        Debug.Log($"[TerrainManager] TerrainProfiles.Count = {count}");
+
+        if (TerrainProfiles != null)
+        {
+            foreach (var def in TerrainProfiles)
+            {
+                if (def == null) { Debug.Log("[TerrainManager] def NULL"); continue; }
+                Debug.Log($"[TerrainManager] {def.terrainName} tile={(def.tile ? def.tile.name : "NULL")} qp={(def.positionProfile ? def.positionProfile.qualityPoints : -999)} def={(def.positionProfile ? def.positionProfile.defenseBonus : -999)}");
+            }
+        }
 
         InitializeCostMap();
     }
 
+
     void InitializeCostMap()
+{
+    categoryMap.Clear();
+    defenseBonusMap.Clear();
+    qualityPointsMap.Clear();
+
+    int count = (TerrainProfiles == null) ? 0 : TerrainProfiles.Count;
+    Debug.Log($"[Terrain] Loaded profiles: {count}");
+
+    if (TerrainProfiles == null) return;
+
+    foreach (var def in TerrainProfiles)
     {
-        categoryMap.Clear();
-        defenseBonusMap.Clear();
+        if (def == null || def.tile == null) continue;
 
-        if (TerrainProfiles == null) return;
+        int defBonus = 0;
+        int qp = 0;
 
-        foreach (var def in TerrainProfiles)
+        if (def.positionProfile != null)
         {
-            if (def == null || def.tile == null) continue;
-
-            // Categoria (movimento)
-            categoryMap[def.tile] = def.category;
-
-            // DPQ -> bÃ´nus de defesa
-            int bonus = 0;
-            if (def.positionProfile != null)
-                bonus = def.positionProfile.defenseBonus;
-
-            defenseBonusMap[def.tile] = bonus;
+            defBonus = def.positionProfile.defenseBonus;
+            qp = def.positionProfile.qualityPoints;
         }
+
+        // Categoria (movimento)
+        categoryMap[def.tile] = def.category;
+
+        // DPQ (defesa/qualidade)
+        defenseBonusMap[def.tile] = defBonus;
+        qualityPointsMap[def.tile] = qp;
+
+        // debug (opcional)
+        Debug.Log($"[Terrain] {def.terrainName} tile={def.tile.name} qp={qp} def={defBonus}");
     }
+}
+
 
 
     // A LÃ“GICA DE OURO: Recebe o tile E o tipo da unidade
@@ -122,5 +188,17 @@ public class TerrainManager : MonoBehaviour
         return 0;
     }
 
+    public int GetQualityPoints(Vector3Int cellPos)
+    {
+        TileBase tile = gameBoard.GetTile(cellPos);
+        if (tile == null) return 0;
+
+        if (qualityPointsMap.TryGetValue(tile, out int qp))
+            return qp;
+
+        return 0;
+    }
 
 }
+
+

@@ -7143,17 +7143,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f61e2dea6990372459dc9dabd87b38c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerrainManager
-  terrainConfig:
-  - name: Floresta
-    tile: {fileID: 11400000, guid: 85417acba4705294a91d797e05374cd3, type: 2}
-    category: 1
-  - name: Montanha
-    tile: {fileID: 11400000, guid: 3bcb6d505d5665044a7de07c0ec919e8, type: 2}
-    category: 2
-  - name: Agua
-    tile: {fileID: 11400000, guid: 6e1e50f8e9e168d4a8317a6b14225827, type: 2}
-    category: 3
+  TerrainProfiles:
+  - {fileID: 11400000, guid: 0146094210413d6489b57e3baaccebbc, type: 2}
+  - {fileID: 11400000, guid: a24ae7e85f227e747b30557f050fb369, type: 2}
+  - {fileID: 11400000, guid: 9bedb673f6edb7344ba3394fb14ff15a, type: 2}
+  - {fileID: 11400000, guid: ed8fb49038df859459506705620f4474, type: 2}
+  - {fileID: 11400000, guid: 77c55adc676c1a8428e6c3d12deced16, type: 2}
   gameBoard: {fileID: 2084163278}
+  terrainsFolder: Assets/DB/Terrenos
 --- !u!1 &1517098644
 GameObject:
   m_ObjectHideFlags: 0

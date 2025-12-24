@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 934a38a15aaf78048bc83acd5fd4ed09, type: 3}
-  m_Name: Planicie
+  m_Name: Floresta
   m_EditorClassIdentifier: Assembly-CSharp::TerrainDef
-  terrainName: 
-  tile: {fileID: 0}
-  category: 0
-  positionProfile: {fileID: 0}
+  terrainName: Floresta
+  tile: {fileID: 11400000, guid: 85417acba4705294a91d797e05374cd3, type: 2}
+  category: 1
+  positionProfile: {fileID: 11400000, guid: 2ca2a26be9dac5a4b8c39a323488b796, type: 2}
