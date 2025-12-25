@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c98910513f6bf84c9b646e7e68af4b2, type: 3}
   m_Name: HQ
   m_EditorClassIdentifier: Assembly-CSharp::BuildingProfile
-  buildingName: 
-  spriteDefault: {fileID: 0}
+  buildingName: HQ
+  spriteDefault: {fileID: 21300000, guid: c090fb273a5237f4b9aef7fb2304a715, type: 3}
   spriteGreen: {fileID: 0}
   spriteRed: {fileID: 0}
   spriteBlue: {fileID: 0}
   spriteYellow: {fileID: 0}
-  positionProfile: {fileID: 0}
-  capturePointsMax: 20
-  incomePerTurn: 1000
+  positionProfile: {fileID: 11400000, guid: 0f516e5aceae34341a56d91712748b19, type: 2}
+  capturePointsMax: 40
+  incomePerTurn: 2000
   canProduce: 1
-  isHQ: 0
+  isHQ: 1

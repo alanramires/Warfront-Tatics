@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c98910513f6bf84c9b646e7e68af4b2, type: 3}
   m_Name: Porto
   m_EditorClassIdentifier: Assembly-CSharp::BuildingProfile
-  buildingName: 
-  spriteDefault: {fileID: 0}
+  buildingName: Porto
+  spriteDefault: {fileID: 21300000, guid: f1bc5d6faae2ff144a2013c87abaa197, type: 3}
   spriteGreen: {fileID: 0}
   spriteRed: {fileID: 0}
   spriteBlue: {fileID: 0}
   spriteYellow: {fileID: 0}
-  positionProfile: {fileID: 0}
-  capturePointsMax: 20
+  positionProfile: {fileID: 11400000, guid: 2ca2a26be9dac5a4b8c39a323488b796, type: 2}
+  capturePointsMax: 30
   incomePerTurn: 1000
   canProduce: 1
   isHQ: 0

@@ -18,25 +18,25 @@ public class UnitProfile : ScriptableObject
     public UnitType unitType;      
     public int moveRange;          
 
-    [Header("EstatÃ­sticas do EsquadrÃ£o")]
+    [Header("Estatísticas do Esquadrão")]
     public int maxHP = 10;        // "Unidades Iniciais" (Soldados vivos)
     public int defense = 8;       // "Defesa do Conjunto" (Fixo)
-    public int maxFuel = 70; // Tanque cheio (PadrÃ£o: 70)
+    public int maxFuel = 70; // Tanque cheio (Padrão: 70)
 
     [Header("Armamento (Arsenal)")]
     public List<WeaponConfig> weapons; // Lista flexÃ­vel (pode ter 1, 2 ou mais armas)
 }
 
 // A "Ficha da Arma" que fica dentro da unidade
-// AQUI Ã‰ A MUDANÃ‡A:
+// AQUI É A MUDANÇA:
 [System.Serializable] 
 public struct WeaponConfig
 {
-    [Header("O Que Ã©?")]
-    public WeaponProfile data;  // <--- VocÃª arrasta o arquivo "Ficha_Rifle" aqui
+    [Header("O Que é?")]
+    public WeaponProfile data;  // <--- Você arrasta o arquivo "Ficha_Rifle" aqui
 
-    [Header("Como estÃ¡ montada?")]
-    public int squadAttacks; // MuniÃ§Ã£o: Varia (Jipe tem mais q soldado)
-    public int minRange;     // Alcance MÃ­nimo
-    public int maxRange;     // Alcance MÃ¡ximo
+    [Header("Como está montada?")]
+    public int squadAttacks; // Munição: Varia (Jipe tem mais q soldado)
+    public int minRange;     // Alcance Mínimo
+    public int maxRange;     // Alcance Máximo
 }

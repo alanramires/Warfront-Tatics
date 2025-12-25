@@ -36,7 +36,8 @@ public class AttackPreviewLine : MonoBehaviour
     [SerializeField] private float endAlpha = 0.75f;
 
     private readonly List<Vector3> fullPoints = new List<Vector3>(64);
-    private float t;
+    private float headFloatIndex;
+
     private bool playing;
 
     private void Awake()
@@ -64,7 +65,8 @@ public class AttackPreviewLine : MonoBehaviour
     public void Hide()
     {
         playing = false;
-        t = 0f;
+        headFloatIndex = 0f;
+
 
         if (line != null)
         {
@@ -105,6 +107,9 @@ public class AttackPreviewLine : MonoBehaviour
 
     public void ShowWorldPoints(Vector3 origin, Vector3 destination, TrajectoryType trajectory)
     {
+        line.enabled = false;
+        line.positionCount = 0;
+
         if (line == null)
         {
             Debug.LogWarning("[AttackPreviewLine] ShowWorldPoints abort: LineRenderer is null.");
@@ -128,8 +133,9 @@ public class AttackPreviewLine : MonoBehaviour
 
 
         line.enabled = true;
-        t = 0f;
+        headFloatIndex = 0f;
         playing = true;
+        ApplyAlpha(1f); // garante que a linha sempre     
 
         // aparece instantâneo
         line.positionCount = 2;
@@ -141,36 +147,50 @@ public class AttackPreviewLine : MonoBehaviour
     {
         if (!playing || line == null || fullPoints.Count < 2) return;
 
-        float dt = (cycleDuration <= 0.01f) ? 1f : (Time.deltaTime / cycleDuration);
-        t += dt;
+        // head anda em "pontos por segundo"
+        float speed = (fullPoints.Count / Mathf.Max(0.01f, cycleDuration));
+        headFloatIndex += speed * Time.deltaTime;
 
-        if (t >= 1f)
+        int last = fullPoints.Count - 1;
+
+        // Quando o tail já passou do fim, reinicia o ciclo
+        // (head vai até last + trailLength e só então reseta)
+        if (headFloatIndex > last + trailLength)
         {
-            ApplyAlpha(endAlpha);
-
-            if (loop)
-            {
-                t = 0f;
-                ApplyAlpha(1f);
-            }
+            if (loop) headFloatIndex = 0f;
             else
             {
-                t = 1f;
                 playing = false;
+                ApplyAlpha(endAlpha);
+                return;
             }
         }
 
-        // desenha linha até o ponto t
-        int headIndex = Mathf.Clamp(Mathf.FloorToInt((fullPoints.Count - 1) * t), 1, fullPoints.Count - 1);
-        int start = Mathf.Max(0, headIndex - trailLength);
-        int count = headIndex - start + 1;
+        // head clampa no fim (pra "entrar no alvo" e ficar lá enquanto o tail termina)
+        float headClamped = Mathf.Min(headFloatIndex, last);
 
+        // tail segue atrás do head, mas nunca abaixo de 0
+        float tailFloat = headFloatIndex - (trailLength - 1);
+        float tailClamped = Mathf.Max(0f, tailFloat);
+
+        int start = Mathf.FloorToInt(tailClamped);
+        int end = Mathf.FloorToInt(headClamped);
+
+        // garante pelo menos 2 pontos pra desenhar
+        if (end <= start)
+        {
+            line.positionCount = 0;
+            return;
+        }
+
+        int count = end - start + 1;
         line.positionCount = count;
+
         for (int i = 0; i < count; i++)
             line.SetPosition(i, fullPoints[start + i]);
-
-
     }
+
+
 
     private void ApplyAlpha(float alpha)
     {

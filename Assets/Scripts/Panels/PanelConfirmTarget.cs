@@ -57,6 +57,11 @@ public class PanelConfirmTarget : MonoBehaviour
 
         currentAttacker = attacker;
         currentTarget = target;
+        
+        // foca no alvo ao abrir confirm target
+        if (currentAttacker != null && currentAttacker.boardCursor != null)
+            currentAttacker.boardCursor.TeleportToCell(currentTarget.currentCell, playSfx: true, adjustCamera: true);
+
 
         TargetUiUtils.SetAttackHeader(headerText, target);
         if (hintText != null) hintText.text = "Confirmar [ENTER]    Cancelar [ESC]";

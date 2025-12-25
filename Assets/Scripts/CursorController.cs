@@ -18,12 +18,17 @@ public class CursorController : MonoBehaviour
     public AudioClip sfxCancel;
     public AudioClip sfxError; 
     public AudioClip sfxDone; 
+    public AudioClip sfxExplosion; 
     private AudioSource audioSource;
     public AudioClip sfxBeep;
 
-    [Header("Audio Movimento")] // <--- NOVO
+    [Header("Audio Movimento")] 
     public AudioClip sfxMarch;
     public AudioClip sfxVehicle;
+
+    [Header("Disparando")] // <--- NOVO
+    public AudioClip sfxArtillery;
+    public AudioClip sfxAttacking;
 
 
     [Header("Estado")]
@@ -325,6 +330,17 @@ public class CursorController : MonoBehaviour
 
     }
 
+    // Teleporta o cursor para uma célula específica
+    public void TeleportToCell(Vector3Int cell, bool playSfx = true, bool adjustCamera = true)
+    {
+        currentCell = cell;
+        transform.position = GridUtils.CellToWorld(mainGrid, currentCell);
+
+        if (playSfx) PlaySFX(sfxCursor);
+
+        if (adjustCamera && cameraController != null)
+            cameraController.AdjustCameraForCursor(transform.position);
+    }
 
 
 

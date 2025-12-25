@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -120,12 +121,23 @@ public class PanelSelectTarget : MonoBehaviour
         }
     }
 
+    // Mostra o painel com os alvos dados
     public void Show(UnitMovement attackerUnit, List<UnitMovement> newTargets)
     {
         attacker = attackerUnit;
 
+        var cursor = attacker.boardCursor;
+        if (cursor != null && cursor.currentCell != attacker.currentCell)
+            cursor.TeleportToCell(attacker.currentCell, playSfx:true, adjustCamera:true);
+
         targets.Clear();
-        if (newTargets != null) targets.AddRange(newTargets);
+        if (newTargets != null)
+        {
+            // filtra apenas os validos
+            targets.AddRange(
+                newTargets.Where(t => t != null && t.gameObject.activeInHierarchy && t.currentHP > 0)
+            );
+        }
 
         if (headerText != null) headerText.text = "Alvos em Alcance";
 
@@ -134,6 +146,7 @@ public class PanelSelectTarget : MonoBehaviour
         if (root == null) root = gameObject;
         root.SetActive(true);
     }
+
 
     public void Hide()
     {

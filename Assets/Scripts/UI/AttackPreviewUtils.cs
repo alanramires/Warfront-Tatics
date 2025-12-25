@@ -4,12 +4,15 @@ public static class AttackPreviewUtils
 {
     public static void Show(UnitMovement attacker, UnitMovement target)
     {
+        
+
         if (AttackPreviewLine.Instance == null) return;
         if (attacker == null || target == null) return;
         if (attacker.boardCursor == null || attacker.boardCursor.mainGrid == null) return;
 
         Grid grid = attacker.boardCursor.mainGrid;
         TrajectoryType traj = GetPrimaryTrajectory(attacker);
+        AttackPreviewLine.Instance?.Hide();
         AttackPreviewLine.Instance.Show(grid, attacker.currentCell, target.currentCell, traj);
     }
 

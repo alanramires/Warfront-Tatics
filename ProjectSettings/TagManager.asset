@@ -44,6 +44,9 @@ TagManager:
   - name: Board
     uniqueID: 2041737869
     locked: 0
+  - name: Buildings
+    uniqueID: 903194197
+    locked: 0
   - name: Units
     uniqueID: 4151702701
     locked: 0

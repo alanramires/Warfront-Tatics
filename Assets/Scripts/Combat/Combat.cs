@@ -140,8 +140,73 @@ public static class Combat
             onDone?.Invoke();
             yield break;
         }
+        if (!defender.gameObject.activeInHierarchy || defender.currentHP <= 0)
+        {
+            Debug.LogWarning("[Combat] alvo inválido/morto. Abortando ataque.");
+            onDone?.Invoke();
+            yield break;
+        }
 
-        // snapshot (HP antes do combate) — para aplicar simultâneo
+        // 0) Descobre trajetória pela arma 0 (MVP atual)
+        var weaponData = (attacker != null && attacker.myWeapons != null && attacker.myWeapons.Count > 0)
+            ? attacker.myWeapons[0].data
+            : null;
+
+        bool isParabolic = (weaponData != null && weaponData.trajectory == TrajectoryType.Parabolic);
+
+        // 1) Toca o SFX “narrativo” (coyote caindo)
+        var cursor = attacker != null ? attacker.boardCursor : null;
+
+        // OBS: esses campos precisam existir no CursorController (ver abaixo)
+        AudioClip preClip = null;
+        if (cursor != null)
+            preClip = isParabolic ? cursor.sfxArtillery : cursor.sfxAttacking;
+
+        if (cursor != null && preClip != null)
+        {
+            cursor.PlaySFX(preClip);
+
+            if (isParabolic)
+            {
+                // encolhe o ALVO durante o som de artilharia
+                yield return CoShrinkWhile(defender.transform, preClip.length, 0.25f);
+            }
+            else
+            {
+                // --- MELEE/TIRO DIRETO: "bicar" estilo Civ 1 ---
+                int distFX = Distance(attacker, defender);
+                bool isDirectContact = (distFX == 1) && !isParabolic;
+
+                // atacante sempre bica se for contato direto
+                if (isDirectContact)
+                {
+                    bool defenderPulledTriggerFX = HasAmmoForWeapon0(defender);
+
+                    if (defenderPulledTriggerFX)
+                        yield return CoBumpTogether(attacker.transform, defender.transform);
+                    else
+                        yield return CoBumpTowards(attacker.transform, defender.transform.position);
+                }
+
+
+            }
+        }
+        else
+        {
+            // fallback, se clip não estiver setado
+            if (isParabolic)
+                yield return CoShrinkWhile(defender.transform, 3.0f, 0.25f);
+            else
+                yield return new WaitForSeconds(0.8f);
+        }
+
+
+        // 2) Agora entra seu "0.25f" (projétil voando + sfx de arma depois)
+        yield return new WaitForSeconds(0.25f);
+
+        // 3) Só então faz as contas (o resto do teu ResolveAttackWeapon0_MVP continua)
+
+        // snapshot (HP antes do combate) – para aplicar simultâneo
         int atkHP0 = Mathf.Max(0, attacker.currentHP);
         int defHP0 = Mathf.Max(0, defender.currentHP);
 
@@ -245,12 +310,16 @@ public static class Combat
 
         Debug.Log($"[Combat] dist={dist} diff(QP)={diff} | A elimina {elimDef} (raw {rawA:0.00}) | D elimina {elimAtk} (raw {rawD:0.00}) | revida={defenderPulledTrigger}");
 
-        // MVP: morte = some do campo (eliminação dupla é válida)
-        if (attacker.currentHP <= 0)
-            attacker.gameObject.SetActive(false);
+        // MVP: morte = pisca → explode → some (pode morrer dupla)
+        bool atkDied = attacker.currentHP <= 0;
+        bool defDied = defender.currentHP <= 0;
 
-        if (defender.currentHP <= 0)
-            defender.gameObject.SetActive(false);
+        if (atkDied)
+            yield return CoBlinkThenExplodeAndHide(attacker, attacker.boardCursor, attacker.boardCursor != null ? attacker.boardCursor.sfxExplosion : null);
+
+        if (defDied)
+            yield return CoBlinkThenExplodeAndHide(defender, attacker.boardCursor, attacker.boardCursor != null ? attacker.boardCursor.sfxExplosion : null);
+
 
         // TODO: checkSobreviventes() / animação de morte
         // - quando você fizer animação, aqui vira “toca animação” e depois desativa/destrói.
@@ -422,6 +491,153 @@ public static class Combat
         }
     }
 
-    // Chame esta função para gerar o log detalhado
+    // ----------------------------------------------------------------
+    //  ANIMAÇÕES AUXILIARES    
+    // ----------------------------------------------------------------
+
+    private static IEnumerator CoShrinkWhile(Transform t, float duration, float minScale = 0.25f) // encolhe até minScale e volta ao normal
+    {
+        if (t == null || duration <= 0f) yield break;
+
+        Vector3 original = t.localScale;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float p = Mathf.Clamp01(elapsed / duration);
+
+            float s = Mathf.Lerp(original.x, minScale, p); // encolhe linearmente até o min
+            t.localScale = new Vector3(s, s, original.z);
+
+            yield return null;
+        }
+
+        // volta ao normal
+        t.localScale = original;
+    }
+
+    private static IEnumerator CoBumpTowards(Transform mover, Vector3 targetWorldPos, float distance = 0.15f, float duration = 0.10f) // mover se move em direção ao targetWorldPos e volta
+    {
+        if (mover == null) yield break;
+
+        Vector3 start = mover.position;
+        Vector3 dir = (targetWorldPos - start).normalized;
+
+        // segurança se for NaN (mesma posição)
+        if (dir.sqrMagnitude < 0.0001f) dir = Vector3.right;
+
+        Vector3 bump = start + dir * distance;
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            mover.position = Vector3.Lerp(start, bump, t / duration);
+            yield return null;
+        }
+
+        t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            mover.position = Vector3.Lerp(bump, start, t / duration);
+            yield return null;
+        }
+
+        mover.position = start;
+    }
+
+    private static IEnumerator CoBumpTogether(Transform a, Transform b, float distance = 0.12f, float duration = 0.10f) // ambos se movem em direção um ao outro e voltam
+    {
+        if (a == null || b == null) yield break;
+
+        Vector3 a0 = a.position;
+        Vector3 b0 = b.position;
+
+        Vector3 dirAB = (b0 - a0).normalized;
+        if (dirAB.sqrMagnitude < 0.0001f) dirAB = Vector3.right;
+
+        Vector3 a1 = a0 + dirAB * distance;
+        Vector3 b1 = b0 - dirAB * distance;
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float p = t / duration;
+            a.position = Vector3.Lerp(a0, a1, p);
+            b.position = Vector3.Lerp(b0, b1, p);
+            yield return null;
+        }
+
+        t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float p = t / duration;
+            a.position = Vector3.Lerp(a1, a0, p);
+            b.position = Vector3.Lerp(b1, b0, p);
+            yield return null;
+        }
+
+        a.position = a0;
+        b.position = b0;
+    }
+
+    private static IEnumerator CoBlinkThenExplodeAndHide(UnitMovement u, CursorController cursor, AudioClip explosionClip) // pisca a unidade, toca explosão e some
+    {
+        // garante que a câmera “puxa” pro alvo que vai explodir
+        if (cursor != null)
+        cursor.TeleportToCell(u.currentCell, playSfx: true, adjustCamera: true);
+
+        
+        if (u == null) yield break;
+
+        // pega todos os sprites da unidade (inclui HUD? não; HUD costuma ser UI/Image, então ok)
+        var renderers = u.GetComponentsInChildren<SpriteRenderer>(true);
+        if (renderers == null || renderers.Length == 0)
+        {
+            // sem sprite? só toca e some
+            if (cursor != null && explosionClip != null) cursor.PlaySFX(explosionClip);
+            u.gameObject.SetActive(false);
+            yield break;
+        }
+
+        // piscada acelerando
+        float interval = 0.12f;
+        float minInterval = 0.03f;
+        int blinks = 10;
+
+        bool visible = true;
+        for (int i = 0; i < blinks; i++)
+        {
+            visible = !visible; // alterna
+            for (int r = 0; r < renderers.Length; r++)
+                if (renderers[r] != null) renderers[r].enabled = visible;
+
+            yield return new WaitForSeconds(interval);
+            interval = Mathf.Max(minInterval, interval * 0.80f);
+        }
+
+        // garante que termina INVISÍVEL
+        for (int r = 0; r < renderers.Length; r++)
+            if (renderers[r] != null) renderers[r].enabled = false;
+
+        // toca explosão já "sumido"
+        if (cursor != null && explosionClip != null)
+        {
+            cursor.PlaySFX(explosionClip);
+            yield return new WaitForSeconds(explosionClip.length);
+        }
+        else
+        {
+            yield return new WaitForSeconds(0.35f);
+        }
+
+        u.gameObject.SetActive(false);
+
+    }
+
 
 }
