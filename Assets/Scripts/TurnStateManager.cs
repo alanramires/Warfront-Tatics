@@ -403,7 +403,7 @@ public class TurnStateManager : MonoBehaviour
 
 
 
-    // =========================================================
+        // =========================================================
     // SelectTarget callbacks (defensivos)
     // =========================================================
     void SubscribeSelectTargetDefensive()
@@ -432,17 +432,17 @@ public class TurnStateManager : MonoBehaviour
 
         // abre confirm
         int idx = (PanelSelectTarget.Instance != null) ? PanelSelectTarget.Instance.LastChosenIndex : 0;
-        
+
         // armazena o alvo escolhido
         selectedTarget = target;
-        PanelConfirmTarget.Instance?.Show(unit,target);
+        PanelConfirmTarget.Instance?.Show(unit, target);
         SetState(TurnState.ConfirmTarget);
 
     }
 
-    // ========================================================================
-    // 🎯 CONFIRMAR ALVO (EnterConfirmTarget)
-    // ========================================================================
+    // =========================================================
+    // CONFIRMAR ALVO (EnterConfirmTarget)
+    // =========================================================
     public void EnterConfirmTarget(UnitMovement target)
     {
         if (unit == null) unit = GetComponent<UnitMovement>();
@@ -458,30 +458,6 @@ public class TurnStateManager : MonoBehaviour
 
             PanelConfirmTarget.Instance.Show(unit, target);
         }
-
-        ShowAttackPreview(target);
-    }
-
-    private void ShowAttackPreview(UnitMovement target)
-    {
-        if (AttackPreviewLine.Instance == null) return;
-        if (unit == null || unit.boardCursor == null || unit.boardCursor.mainGrid == null) return;
-        if (target == null) return;
-
-        var grid = unit.boardCursor.mainGrid;
-        var traj = GetPrimaryTrajectory(unit);
-        AttackPreviewLine.Instance.Show(grid, unit.currentCell, target.currentCell, traj);
-    }
-
-    private static TrajectoryType GetPrimaryTrajectory(UnitMovement attacker)
-    {
-        if (attacker != null && attacker.myWeapons != null && attacker.myWeapons.Count > 0)
-        {
-            var cfg = attacker.myWeapons[0];
-            if (cfg.data != null)
-                return cfg.data.trajectory;
-        }
-        return TrajectoryType.Straight;
     }
 
     private void CancelConfirmTarget()
@@ -495,9 +471,6 @@ public class TurnStateManager : MonoBehaviour
     {
         if (PanelConfirmTarget.Instance) PanelConfirmTarget.Instance.Hide();
         if (AttackPreviewLine.Instance) AttackPreviewLine.Instance.Hide();
-        // depois você pluga aqui o disparo real
+        // depois voce pluga aqui o disparo real
     }
-
-
-
 }

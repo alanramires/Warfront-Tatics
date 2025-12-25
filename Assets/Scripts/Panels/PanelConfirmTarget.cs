@@ -11,14 +11,14 @@ public class PanelConfirmTarget : MonoBehaviour
     [SerializeField] private GameObject root;
     [SerializeField] private TextMeshProUGUI headerText;
 
-    [Header("Item único (mesmo prefab do SelectTarget)")]
+    [Header("Item unico (mesmo prefab do SelectTarget)")]
     [SerializeField] private RectTransform itemRoot;
     [SerializeField] private GameObject targetItemTemplate;
 
     [Header("Textos / dicas")]
     [SerializeField] private TextMeshProUGUI hintText; // opcional
 
-    [Header("Botões")]
+    [Header("Botoes")]
     [SerializeField] private Button btnConfirm;
     [SerializeField] private Button btnCancel;
 
@@ -48,48 +48,25 @@ public class PanelConfirmTarget : MonoBehaviour
     }
 
     public bool IsOpen => root != null && root.activeSelf;
-    //public UnitMovement CurrentTarget => currentTarget;
 
     public void Show(UnitMovement attacker, UnitMovement target)
     {
-       // procura o root se não tiver setado, ou seja, o próprio GO/painel
+        // procura o root se nao tiver setado, ou seja, o proprio GO/painel
         if (root == null) root = gameObject;
         root.SetActive(true);
 
         currentAttacker = attacker;
         currentTarget = target;
 
-        root.SetActive(true);
-
-        string unitName = (target != null && target.data != null && !string.IsNullOrEmpty(target.data.unitName))
-            ? target.data.unitName
-            : (target != null ? target.name : "Alvo");
-
-        if (headerText != null) headerText.text = $"Atacar {unitName}?";
+        TargetUiUtils.SetAttackHeader(headerText, target);
         if (hintText != null) hintText.text = "Confirmar [ENTER]    Cancelar [ESC]";
 
         EnsureSpawnedItem();
         FillTargetItem(target);
         LayoutRebuilder.ForceRebuildLayoutImmediate(itemRoot);
 
-        // ✅ Preview correto: attacker REAL + target REAL
-        if (AttackPreviewLine.Instance != null && currentAttacker != null && currentTarget != null)
-        {
-            var grid = currentAttacker.boardCursor.mainGrid;
-
-            TrajectoryType traj = TrajectoryType.Straight;
-            if (currentAttacker.myWeapons != null && currentAttacker.myWeapons.Count > 0)
-            {
-                WeaponConfig w = currentAttacker.myWeapons[0]; // struct
-                if (w.data != null) traj = w.data.trajectory;  // Parabolic pro morteiro
-            }
-
-            AttackPreviewLine.Instance.Show(grid, currentAttacker.currentCell, currentTarget.currentCell, traj);
-            Debug.Log($"[ConfirmTarget] attacker={currentAttacker.currentCell} target={currentTarget.currentCell} traj={traj}");
-        }
-
-
-
+        // Preview correto: attacker REAL + target REAL
+        AttackPreviewUtils.Show(currentAttacker, currentTarget);
     }
 
     public void Hide()
@@ -100,7 +77,6 @@ public class PanelConfirmTarget : MonoBehaviour
         currentAttacker = null;
         currentTarget = null;
     }
-
 
     public void Confirm()
     {
@@ -129,12 +105,11 @@ public class PanelConfirmTarget : MonoBehaviour
         }
     }
 
-
     private void FillTargetItem(UnitMovement target)
     {
         if (spawnedItem == null || target == null) return;
 
-        // pega a PRIMEIRA Image filha (exceto a que estiver no próprio root do item, se existir)
+        // pega a PRIMEIRA Image filha (exceto a que estiver no proprio root do item, se existir)
         Image img = null;
         var images = spawnedItem.GetComponentsInChildren<Image>(true);
         foreach (var im in images)
@@ -150,33 +125,23 @@ public class PanelConfirmTarget : MonoBehaviour
         if (tmps != null && tmps.Length > 0) txt = tmps[0];
 
         // sprite
-        if (img != null && target.TryGetComponent<SpriteRenderer>(out var sr))
+        if (img != null)
         {
-            img.sprite = sr.sprite;
-            img.color = TeamUtils.GetColor(target.teamId);
+            if (TargetUiUtils.TryGetSprite(target, out var sprite, out var color, true))
+            {
+                img.sprite = sprite;
+                img.color = color;
+            }
         }
 
         // texto + cor
         if (txt != null)
         {
-            string unitName = (target.data != null && !string.IsNullOrEmpty(target.data.unitName))
-                ? target.data.unitName
-                : target.name;
+            string unitName = TargetUiUtils.GetUnitDisplayName(target, target != null ? target.name : "Alvo");
+            string cellLabel = TargetUiUtils.GetCellLabel(target);
 
-            txt.text = $"{unitName} ({target.currentCell.y},{target.currentCell.x})";
-            txt.color = TeamUtils.GetColor(target.teamId);
-        }
-
-        // header "Atacar <nome colorido>?"
-        if (headerText != null)
-        {
-            string unitName = (target.data != null && !string.IsNullOrEmpty(target.data.unitName))
-                ? target.data.unitName
-                : target.name;
-
-            var c = TeamUtils.GetColor(target.teamId);
-            string hex = ColorUtility.ToHtmlStringRGB(c);
-            headerText.text = $"Atacar <color=#{hex}>{unitName}</color>?";
+            txt.text = $"{unitName} ({cellLabel})";
+            txt.color = TeamUtils.GetColor(target != null ? target.teamId : 0);
         }
     }
 }

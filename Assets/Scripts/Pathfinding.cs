@@ -96,21 +96,6 @@ public static class Pathfinding
 
     private static List<Vector3Int> GetNeighbors(Vector3Int node)
     {
-        List<Vector3Int> neighbors = new List<Vector3Int>();
-        bool isOddRow = node.y % 2 != 0; 
-
-        Vector3Int[] evenOffsets = {
-            new Vector3Int(1, 0, 0), new Vector3Int(0, -1, 0), new Vector3Int(-1, -1, 0),
-            new Vector3Int(-1, 0, 0), new Vector3Int(-1, 1, 0), new Vector3Int(0, 1, 0)
-        };
-        Vector3Int[] oddOffsets = {
-            new Vector3Int(1, 0, 0), new Vector3Int(1, -1, 0), new Vector3Int(0, -1, 0),
-            new Vector3Int(-1, 0, 0), new Vector3Int(0, 1, 0), new Vector3Int(1, 1, 0)
-        };
-
-        Vector3Int[] directions = isOddRow ? oddOffsets : evenOffsets;
-        foreach (var dir in directions) neighbors.Add(node + dir);
-        
-        return neighbors;
+        return HexUtils.GetNeighborsOddR(node);
     }
 }

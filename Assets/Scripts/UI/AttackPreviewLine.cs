@@ -95,8 +95,8 @@ public class AttackPreviewLine : MonoBehaviour
             return;
         }
 
-        Vector3 p0 = grid.GetCellCenterWorld(attackerCell);
-        Vector3 p1 = grid.GetCellCenterWorld(targetCell);
+        Vector3 p0 = GridUtils.GetCellCenterWorld(grid, attackerCell);
+        Vector3 p1 = GridUtils.GetCellCenterWorld(grid, targetCell);
 
         Debug.Log($"[AttackPreviewLine] Show OK: attacker={attackerCell} target={targetCell} traj={trajectory}");
         Debug.Log($"[AttackPreviewLine] p0={p0} p1={p1}");

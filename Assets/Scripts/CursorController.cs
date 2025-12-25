@@ -36,7 +36,7 @@ public class CursorController : MonoBehaviour
     {
         audioSource = GetComponent<AudioSource>();
         // Inicializa a posição do cursor na célula atual
-        transform.position = mainGrid.CellToWorld(currentCell);
+        transform.position = GridUtils.CellToWorld(mainGrid, currentCell);
 
         if (cameraController == null && Camera.main != null)
         {
@@ -141,7 +141,7 @@ public class CursorController : MonoBehaviour
         {
             // Move!
             Vector3 oldPos = transform.position;
-            transform.position = mainGrid.CellToWorld(newCell);
+            transform.position = GridUtils.CellToWorld(mainGrid, newCell);
             currentCell = newCell; 
             PlaySFX(sfxCursor);
 
@@ -193,29 +193,7 @@ public class CursorController : MonoBehaviour
     // --- A LÓGICA MÁGICA: Tenta os dois vizinhos verticais ---
     Vector3Int GetSmartVerticalMove(Vector3Int current, int directionY)
     {
-        // Em um grid "Pointed Top" (Topo Pontudo), mover Y sempre altera o X também.
-        // As coordenadas dependem se a linha é PAR ou ÍMPAR.
-        
-        bool isOddRow = current.y % 2 != 0; 
-        
-        // Candidatos a vizinhos (Esquerda e Direita na linha de cima/baixo)
-        int offsetLeft = isOddRow ? 0 : -1;
-        int offsetRight = isOddRow ? 1 : 0;
-
-        Vector3Int optionA = new Vector3Int(current.x + offsetRight, current.y + directionY, 0); // Direita-Vertical
-        Vector3Int optionB = new Vector3Int(current.x + offsetLeft,  current.y + directionY, 0); // Esquerda-Vertical
-
-        // LÓGICA DE DECISÃO:
-        
-        // 1. Tenta a Opção A (Padrão)
-        if (IsValidMove(optionA)) return optionA;
-
-        // 2. Se a A falhou, tenta a Opção B
-        if (IsValidMove(optionB)) return optionB;
-
-        // 3. Se as duas falharam, retorna a própria célula (não move)
-        // OU retorna a Opção A padrão para fazer o cursor "bater" na parede visualmente
-        return optionA; 
+        return HexUtils.GetSmartVerticalMoveOddR(current, directionY, IsValidMove);
     }
 
     // HANDLE ENTER
@@ -340,7 +318,7 @@ public class CursorController : MonoBehaviour
         UnitMovement target = candidates[nextIndex];
         Vector3 oldPos = transform.position;
         currentCell = target.currentCell;
-        transform.position = mainGrid.CellToWorld(currentCell);
+        transform.position = GridUtils.CellToWorld(mainGrid, currentCell);
         PlaySFX(sfxCursor);
 
         cameraController.AdjustCameraForCursor(transform.position);

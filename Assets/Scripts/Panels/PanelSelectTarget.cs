@@ -10,7 +10,7 @@ public class PanelSelectTarget : MonoBehaviour
     public static PanelSelectTarget Instance { get; private set; }
 
     [Header("Refs (arraste no Inspector)")]
-    [SerializeField] private GameObject root;                 // Panel_SelectTarget (pode ser o próprio GO)
+    [SerializeField] private GameObject root;                 // Panel_SelectTarget (pode ser o proprio GO)
     [SerializeField] private TextMeshProUGUI headerText;      // HeaderText
     [SerializeField] private Transform listRoot;              // ListRoot
     [SerializeField] private GameObject targetItemTemplate;   // TargetItem (seu template/prefab)
@@ -51,7 +51,7 @@ public class PanelSelectTarget : MonoBehaviour
 
         if (root == null) root = gameObject;
 
-        // Auto-find por nome, se você esquecer de ligar no Inspector
+        // Auto-find por nome, se voce esquecer de ligar no Inspector
         if (headerText == null)
         {
             Transform t = transform.Find("HeaderText");
@@ -81,12 +81,12 @@ public class PanelSelectTarget : MonoBehaviour
             btnCancel.onClick.RemoveAllListeners();
             btnCancel.onClick.AddListener(() =>
             {
-                // ESC é tratado no TurnStateManager; botão só “simula” ESC via log.
-                Debug.Log("[SelectTarget] Cancel clicado (use ESC também).");
+                // ESC e tratado no TurnStateManager; botao so simula via log.
+                Debug.Log("[SelectTarget] Cancel clicado (use ESC tambem).");
             });
         }
 
-        // Importante: template não deve ficar visível
+        // Importante: template nao deve ficar visivel
         if (targetItemTemplate != null)
             targetItemTemplate.SetActive(false);
 
@@ -98,7 +98,7 @@ public class PanelSelectTarget : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-   private void Update()
+    private void Update()
     {
         if (!IsOpen) return;
 
@@ -119,7 +119,6 @@ public class PanelSelectTarget : MonoBehaviour
             }
         }
     }
-
 
     public void Show(UnitMovement attackerUnit, List<UnitMovement> newTargets)
     {
@@ -157,7 +156,6 @@ public class PanelSelectTarget : MonoBehaviour
         OnTargetChosen?.Invoke(chosen);
     }
 
-
     private void RebuildList()
     {
         ClearList();
@@ -189,14 +187,12 @@ public class PanelSelectTarget : MonoBehaviour
             // Icon: tenta puxar sprite do SpriteRenderer do alvo
             if (icon != null)
             {
-                SpriteRenderer sr = t.GetComponent<SpriteRenderer>();
-                if (sr != null && sr.sprite != null)
+                if (TargetUiUtils.TryGetSprite(t, out var sprite, out var color, false))
                 {
-                    icon.sprite = sr.sprite;
+                    icon.sprite = sprite;
                     icon.enabled = true;
                     icon.preserveAspect = true;
-                    icon.color = (sr != null) ? sr.color : Color.white;
-
+                    icon.color = color;
                 }
                 else
                 {
@@ -204,20 +200,17 @@ public class PanelSelectTarget : MonoBehaviour
                 }
             }
 
-
             // Texto: "[ENTER] Apache (0,16)" ou "[1] ... "
             if (txt != null)
             {
-                string unitName = (t.data != null && !string.IsNullOrEmpty(t.data.unitName))
-                    ? t.data.unitName
-                    : t.name;
+                string unitName = TargetUiUtils.GetUnitDisplayName(t, t != null ? t.name : "Alvo");
+                string cellLabel = TargetUiUtils.GetCellLabel(t);
 
                 string hotkey = (i == 0) ? "ENTER" : i.ToString();
                 //txt.text = $"[{hotkey}] {unitName}";
-                txt.text = $"[{hotkey}] {unitName} \n ({t.currentCell.y},{t.currentCell.x})";
+                txt.text = $"[{hotkey}] {unitName} \n ({cellLabel})";
                 txt.color = TeamUtils.GetColor(attacker != null ? attacker.teamId : 0);
             }
-
         }
     }
 

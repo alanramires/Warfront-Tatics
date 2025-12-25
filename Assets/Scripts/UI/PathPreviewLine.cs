@@ -135,9 +135,7 @@ public class PathPreviewLine : MonoBehaviour
         List<Vector3> positions = new List<Vector3>();
         for (int i = 0; i < path.Count; i++)
         {
-            Vector3 p = grid.GetCellCenterWorld(path[i]);
-            p.y += yOffset;
-            p.z += zOffset;
+            Vector3 p = GridUtils.GetCellCenterWorld(grid, path[i], yOffset, zOffset);
             lr.SetPosition(i, p);
             positions.Add(p);
         }

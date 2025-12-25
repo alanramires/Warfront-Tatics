@@ -16,6 +16,7 @@ public enum UnitType
     Sub
 }
 
+// Categorias de terreno para efeitos de movimento/defesa
 public enum TerrainCategory
 {
     // A lista completa de categorias de terreno
@@ -42,6 +43,7 @@ public enum TurnState
 }
 
 
+// Cores padrão para os times
 public static class GameColors
 {
     public static readonly Color TeamGreen = new Color(144f/255f, 238f/255f, 144f/255f); 
@@ -50,6 +52,7 @@ public static class GameColors
     public static readonly Color TeamYellow = new Color(255f/255f, 246f/255f, 141f/255f); 
 }
 
+// Utilitários relacionados a times
 public static class TeamUtils
 {
     public const int Green = 0;
@@ -57,6 +60,7 @@ public static class TeamUtils
     public const int Blue = 2;
     public const int Yellow = 3;
 
+    // Retorna a cor do time baseado no ID
     public static Color GetColor(int teamId)
     {
         switch (teamId)
@@ -69,6 +73,7 @@ public static class TeamUtils
         }
     }
 
+    // Retorna o nome do time baseado no ID
     public static string GetName(int teamId)
     {
         switch (teamId)
@@ -80,4 +85,41 @@ public static class TeamUtils
             default:     return $"time {teamId}";
         }
     }
+
+    // Sprite por time (UnitProfile)
+    public static Sprite GetTeamSprite(UnitProfile profile, int teamId)
+    {
+        if (profile == null) return null;
+
+        return teamId switch
+        {
+            Green  => profile.spriteGreen != null ? profile.spriteGreen : profile.spriteDefault,
+            Red    => profile.spriteRed != null ? profile.spriteRed : profile.spriteDefault,
+            Blue   => profile.spriteBlue != null ? profile.spriteBlue : profile.spriteDefault,
+            Yellow => profile.spriteYellow != null ? profile.spriteYellow : profile.spriteDefault,
+            _      => profile.spriteDefault
+        };
+    }
+
+    // Sprite por time (BuildingProfile)
+    public static Sprite GetTeamSprite(BuildingProfile profile, int teamId)
+    {
+        if (profile == null) return null;
+
+        return teamId switch
+        {
+            Green  => profile.spriteGreen != null ? profile.spriteGreen : profile.spriteDefault,
+            Red    => profile.spriteRed != null ? profile.spriteRed : profile.spriteDefault,
+            Blue   => profile.spriteBlue != null ? profile.spriteBlue : profile.spriteDefault,
+            Yellow => profile.spriteYellow != null ? profile.spriteYellow : profile.spriteDefault,
+            _      => profile.spriteDefault
+        };
+    }
+
+    public static bool ShouldFlipX(int teamId)
+    {
+        return teamId == Red || teamId == Yellow;
+    }
+
+    // Adicione mais utilitarios relacionados a times aqui, se necessario
 }

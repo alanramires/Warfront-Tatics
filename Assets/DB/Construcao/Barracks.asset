@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c98910513f6bf84c9b646e7e68af4b2, type: 3}
+  m_Name: Barracks
+  m_EditorClassIdentifier: Assembly-CSharp::BuildingProfile
+  buildingName: 
+  spriteDefault: {fileID: 0}
+  spriteGreen: {fileID: 0}
+  spriteRed: {fileID: 0}
+  spriteBlue: {fileID: 0}
+  spriteYellow: {fileID: 0}
+  positionProfile: {fileID: 0}
+  capturePointsMax: 20
+  incomePerTurn: 1000
+  canProduce: 1
+  isHQ: 0

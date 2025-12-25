@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Tilemaps; 
 using System.Collections;   
 using System.Collections.Generic; 
@@ -33,10 +33,10 @@ public partial class UnitMovement : MonoBehaviour
     public int currentHP;        
     public List<WeaponConfig> myWeapons = new List<WeaponConfig>();
 
-    [Header("ConfiguraÃ§Ãµes de Time")]
+    [Header("Configura��es de Time")]
     public int teamId = 0; 
 
-    [Header("ReferÃªncias Gerais")]
+    [Header("Refer�ncias Gerais")]
     public CursorController boardCursor; 
     public Tilemap rangeTilemap; 
     public Vector3Int currentCell = new Vector3Int(0, 0, 0); 
@@ -78,6 +78,11 @@ public partial class UnitMovement : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>(); 
         stateManager = GetComponent<TurnStateManager>(); 
 
+        // Configurações iniciais do SpriteRenderer
+        spriteRenderer.sortingLayerName = "Units";
+        spriteRenderer.sortingOrder = 0;
+
+
         if (rangeTilemap == null)
         {
             GameObject mapObj = GameObject.Find("RangeMap");
@@ -86,28 +91,16 @@ public partial class UnitMovement : MonoBehaviour
 
         // 2. CONFIGURAÃ‡ÃƒO BASEADA NA FICHA
         if (data != null)
-        {
-            Color teamColor = TeamUtils.GetColor(teamId);
-            Sprite specificSkin = null;
+        {            Color teamColor = TeamUtils.GetColor(teamId);
+            Sprite teamSprite = TeamUtils.GetTeamSprite(data, teamId);
             currentFuel = data.maxFuel;
 
-            switch (teamId)
-            {
-                case TeamUtils.Green:  specificSkin = data.spriteGreen; break;
-                case TeamUtils.Red:    specificSkin = data.spriteRed; break;
-                case TeamUtils.Blue:   specificSkin = data.spriteBlue; break;
-                case TeamUtils.Yellow: specificSkin = data.spriteYellow; break;
-            }
-
-            if (specificSkin != null) spriteRenderer.sprite = specificSkin;
+            if (teamSprite != null) spriteRenderer.sprite = teamSprite;
             else spriteRenderer.sprite = data.spriteDefault;
 
             spriteRenderer.color = teamColor;
-            
-            if (teamId == 1 || teamId == 3) spriteRenderer.flipX = true; 
-            else spriteRenderer.flipX = false;
 
-            currentHP = data.maxHP;
+            spriteRenderer.flipX = TeamUtils.ShouldFlipX(teamId);currentHP = data.maxHP;
 
             myWeapons.Clear();
             foreach (var w in data.weapons) myWeapons.Add(w); 
@@ -126,8 +119,7 @@ public partial class UnitMovement : MonoBehaviour
 
         if (boardCursor != null && boardCursor.mainGrid != null)
         {
-            Vector3 worldPos = boardCursor.mainGrid.GetCellCenterWorld(currentCell);
-            worldPos.y += visualOffset;
+            Vector3 worldPos = GridUtils.GetCellCenterWorld(boardCursor.mainGrid, currentCell, visualOffset);
             transform.position = worldPos;
         }
 

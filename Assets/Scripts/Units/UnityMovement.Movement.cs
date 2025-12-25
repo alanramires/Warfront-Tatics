@@ -59,10 +59,7 @@ public partial class UnitMovement : MonoBehaviour
         for (int i = 1; i < path.Count; i++)
         {
             Vector3Int nextTile = path[i];
-            Vector3 targetPos = boardCursor.mainGrid.GetCellCenterWorld(nextTile);
-
-
-            targetPos.y += visualOffset; 
+            Vector3 targetPos = GridUtils.GetCellCenterWorld(boardCursor.mainGrid, nextTile, visualOffset); 
 
             while (Vector3.Distance(transform.position, targetPos) > 0.01f)
             {
@@ -97,9 +94,7 @@ public partial class UnitMovement : MonoBehaviour
             for (int i = lastPathTaken.Count - 2; i >= 0; i--)
             {
                 Vector3Int nextTile = lastPathTaken[i];
-                Vector3 targetPos = boardCursor.mainGrid.GetCellCenterWorld(nextTile);
-
-                targetPos.y += visualOffset; 
+                Vector3 targetPos = GridUtils.GetCellCenterWorld(boardCursor.mainGrid, nextTile, visualOffset); 
 
                 while (Vector3.Distance(transform.position, targetPos) > 0.01f)
                 {

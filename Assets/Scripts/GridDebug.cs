@@ -28,10 +28,7 @@ public class GridDebug : MonoBehaviour
     void CreateLabel(Vector3Int pos)
     {
         // Converte grid (0,0) para mundo (0.5, 1.2, etc)
-        Vector3 worldPos = tilemap.CellToWorld(pos);
-        
-        // Aplica o ajuste fino (para centralizar visualmente)
-        worldPos += offset;
+        Vector3 worldPos = GridUtils.CellToWorld(tilemap, pos, offset);
 
         // Cria o texto
         GameObject label = Instantiate(textPrefab, worldPos, Quaternion.identity, transform);
