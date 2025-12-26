@@ -14,6 +14,10 @@ public class WeaponProfile : ScriptableObject
     public Sprite HUDSprite; // <--- O desenho da bala/foguete (PNG)
     public TrajectoryType trajectory; // <--- Reta ou Parábola?
     public float projectileSpeed = 20f; // Velocidade do voo
+    public AudioClip sfxFiring;
+    public AudioClip sfxHit;
+
+
 
     [Header("Estatísticas de Combate")]
     public int baseAttackPower;     

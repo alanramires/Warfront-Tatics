@@ -104,11 +104,16 @@ public static class Combat
     }
 
     // --- munição / ataques de esquadrão (arma[0]) ---
+    static bool HasAmmoForWeapon(UnitMovement unit, int weaponIndex = 0)
+    {
+        if (unit == null || unit.myWeapons == null) return false;
+        if (weaponIndex < 0 || weaponIndex >= unit.myWeapons.Count) return false;
+        return unit.myWeapons[weaponIndex].squadAttacks > 0;
+    }
+
     public static bool HasAmmoForWeapon0(UnitMovement unit)
     {
-        if (unit == null) return false;
-        if (unit.myWeapons == null || unit.myWeapons.Count == 0) return false;
-        return unit.myWeapons[0].squadAttacks > 0;
+        return HasAmmoForWeapon(unit, 0);
     }
 
     public static bool ConsumeAmmoWeapon0(UnitMovement unit)
@@ -121,6 +126,15 @@ public static class Combat
 
         unit.hud?.SetupWeapons(unit.myWeapons);
         return true;
+    }
+
+    public static bool EnsureAmmo(UnitMovement unit, int weaponIndex = 0)
+    {
+        if (HasAmmoForWeapon(unit, weaponIndex)) return true;
+
+        Debug.Log("mano vc ta sem bala :D");
+        unit?.boardCursor?.PlayError();
+        return false;
     }
 
     // teto de eliminações: max 10 OU HP do atirador OU HP do alvo
@@ -169,7 +183,7 @@ public static class Combat
             if (isParabolic)
             {
                 // encolhe o ALVO durante o som de artilharia
-                yield return CoShrinkWhile(defender.transform, preClip.length, 0.25f);
+                yield return CombatAnimations.CoShrinkWhile(defender.transform, preClip.length, 0.25f);
             }
             else
             {
@@ -180,12 +194,12 @@ public static class Combat
                 // atacante sempre bica se for contato direto
                 if (isDirectContact)
                 {
-                    bool defenderPulledTriggerFX = HasAmmoForWeapon0(defender);
+                    bool defenderPulledTriggerFX = CanShootWeapon0(defender, distFX);
 
                     if (defenderPulledTriggerFX)
-                        yield return CoBumpTogether(attacker.transform, defender.transform);
+                        yield return CombatAnimations.CoBumpTogether(attacker.transform, defender.transform);
                     else
-                        yield return CoBumpTowards(attacker.transform, defender.transform.position);
+                        yield return CombatAnimations.CoBumpTowards(attacker.transform, defender.transform.position);
                 }
 
 
@@ -195,14 +209,45 @@ public static class Combat
         {
             // fallback, se clip não estiver setado
             if (isParabolic)
-                yield return CoShrinkWhile(defender.transform, 3.0f, 0.25f);
+                yield return CombatAnimations.CoShrinkWhile(defender.transform, 3.0f, 0.25f);
             else
                 yield return new WaitForSeconds(0.8f);
+
         }
 
+        // Se nao tem municao, nem puxa o gatilho
+        if (!EnsureAmmo(attacker))
+        {
+            onDone?.Invoke();
+            yield break;
+        }
 
-        // 2) Agora entra seu "0.25f" (projétil voando + sfx de arma depois)
-        yield return new WaitForSeconds(0.25f);
+        int dist = Distance(attacker, defender);
+
+        bool attackerPulledTrigger = CanShootWeapon0(attacker, dist);
+        if (!attackerPulledTrigger)
+        {
+            attacker.boardCursor?.PlayError();
+            onDone?.Invoke();
+            yield break;
+        }
+
+        bool defenderPulledTrigger = (dist == 1) && CanShootWeapon0(defender, dist);
+        var defWeapon = (defender.myWeapons != null && defender.myWeapons.Count > 0) ? defender.myWeapons[0].data : null;
+
+        // 2) Agora entra seu "0.25f" (proj?til voando + sfx de arma depois)
+        yield return CombatAnimations.CoFireProjectiles(
+            attacker,
+            defender,
+            weaponData,
+            defenderPulledTrigger ? defWeapon : null,
+            attackerPulledTrigger,
+            defenderPulledTrigger,
+            cursor
+        );
+
+
+
 
         // 3) Só então faz as contas (o resto do teu ResolveAttackWeapon0_MVP continua)
 
@@ -235,34 +280,19 @@ public static class Combat
         string defPosUsed = GetPositionUsedForCalcStr(defender);
 
 
-        // Se não tem munição, nem puxa o gatilho
-        if (!HasAmmoForWeapon0(attacker))
-        {
-            Debug.Log("mano vc ta sem bala :D");
 
-            // SFX de erro (CursorController tem PlayError -> sfxError)
-            attacker.boardCursor?.PlayError();
-            onDone?.Invoke();
-            yield break;
-        }
 
-        int dist = Distance(attacker, defender);
-
-        // MVP: revide só se dist == 1
-        bool defenderCanRetaliate = (dist == 1);
 
         // FUTURO (pós-MVP): mesmo com dist==1, pode NÃO revidar se domínio não for compatível.
         // Ex: AAA sendo atacada por bazooka (alvo terrestre) não revida porque arma só atinge DOMÍNIO AÉREO.
         // defenderCanRetaliate = defenderCanRetaliate && DomainAllowsRetaliation(defender, attacker);
 
         // “puxou o gatilho” = tentou atacar (tem munição e ataque é permitido)
-        bool attackerPulledTrigger = true;
+        //bool attackerPulledTrigger = true;
 
         // defensor só “puxa gatilho” se revida E tem munição
-        bool defenderPulledTrigger = defenderCanRetaliate && HasAmmoForWeapon0(defender);
+        //bool defenderPulledTrigger = defenderCanRetaliate && HasAmmoForWeapon0(defender);
 
-        // “balas voando”
-        yield return new WaitForSeconds(0.25f);
 
         // DPQ diff (do atacante em relação ao defensor)
         int qpA = GetQualityPointsFromPosition(attacker);
@@ -315,10 +345,10 @@ public static class Combat
         bool defDied = defender.currentHP <= 0;
 
         if (atkDied)
-            yield return CoBlinkThenExplodeAndHide(attacker, attacker.boardCursor, attacker.boardCursor != null ? attacker.boardCursor.sfxExplosion : null);
+            yield return CombatAnimations.CoBlinkThenExplodeAndHide(attacker, attacker.boardCursor, attacker.boardCursor != null ? attacker.boardCursor.sfxExplosion : null);
 
         if (defDied)
-            yield return CoBlinkThenExplodeAndHide(defender, attacker.boardCursor, attacker.boardCursor != null ? attacker.boardCursor.sfxExplosion : null);
+            yield return CombatAnimations.CoBlinkThenExplodeAndHide(defender, attacker.boardCursor, attacker.boardCursor != null ? attacker.boardCursor.sfxExplosion : null);
 
 
         // TODO: checkSobreviventes() / animação de morte
@@ -491,153 +521,27 @@ public static class Combat
         }
     }
 
-    // ----------------------------------------------------------------
-    //  ANIMAÇÕES AUXILIARES    
-    // ----------------------------------------------------------------
-
-    private static IEnumerator CoShrinkWhile(Transform t, float duration, float minScale = 0.25f) // encolhe até minScale e volta ao normal
+    // --- checagens auxiliares de alcance/retaliação ---
+    static bool Weapon0InRange(UnitMovement shooter, int dist)
     {
-        if (t == null || duration <= 0f) yield break;
+        if (shooter == null || shooter.myWeapons == null || shooter.myWeapons.Count == 0) return false;
+        var cfg = shooter.myWeapons[0];
+        if (cfg.data == null) return false;
 
-        Vector3 original = t.localScale;
+        // Ajuste os nomes dos campos conforme seu WeaponData:
+        // exemplos comuns: minRange/maxRange, rangeMin/rangeMax, minDistance/maxDistance
+        int min = cfg.minRange;
+        int max = cfg.maxRange;
 
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float p = Mathf.Clamp01(elapsed / duration);
-
-            float s = Mathf.Lerp(original.x, minScale, p); // encolhe linearmente até o min
-            t.localScale = new Vector3(s, s, original.z);
-
-            yield return null;
-        }
-
-        // volta ao normal
-        t.localScale = original;
+        return dist >= min && dist <= max;
     }
 
-    private static IEnumerator CoBumpTowards(Transform mover, Vector3 targetWorldPos, float distance = 0.15f, float duration = 0.10f) // mover se move em direção ao targetWorldPos e volta
+    // checa se defensor pode revidar com arma 0
+    static bool CanShootWeapon0(UnitMovement shooter, int dist)
     {
-        if (mover == null) yield break;
-
-        Vector3 start = mover.position;
-        Vector3 dir = (targetWorldPos - start).normalized;
-
-        // segurança se for NaN (mesma posição)
-        if (dir.sqrMagnitude < 0.0001f) dir = Vector3.right;
-
-        Vector3 bump = start + dir * distance;
-
-        float t = 0f;
-        while (t < duration)
-        {
-            t += Time.deltaTime;
-            mover.position = Vector3.Lerp(start, bump, t / duration);
-            yield return null;
-        }
-
-        t = 0f;
-        while (t < duration)
-        {
-            t += Time.deltaTime;
-            mover.position = Vector3.Lerp(bump, start, t / duration);
-            yield return null;
-        }
-
-        mover.position = start;
+        return HasAmmoForWeapon0(shooter) && Weapon0InRange(shooter, dist);
     }
 
-    private static IEnumerator CoBumpTogether(Transform a, Transform b, float distance = 0.12f, float duration = 0.10f) // ambos se movem em direção um ao outro e voltam
-    {
-        if (a == null || b == null) yield break;
-
-        Vector3 a0 = a.position;
-        Vector3 b0 = b.position;
-
-        Vector3 dirAB = (b0 - a0).normalized;
-        if (dirAB.sqrMagnitude < 0.0001f) dirAB = Vector3.right;
-
-        Vector3 a1 = a0 + dirAB * distance;
-        Vector3 b1 = b0 - dirAB * distance;
-
-        float t = 0f;
-        while (t < duration)
-        {
-            t += Time.deltaTime;
-            float p = t / duration;
-            a.position = Vector3.Lerp(a0, a1, p);
-            b.position = Vector3.Lerp(b0, b1, p);
-            yield return null;
-        }
-
-        t = 0f;
-        while (t < duration)
-        {
-            t += Time.deltaTime;
-            float p = t / duration;
-            a.position = Vector3.Lerp(a1, a0, p);
-            b.position = Vector3.Lerp(b1, b0, p);
-            yield return null;
-        }
-
-        a.position = a0;
-        b.position = b0;
-    }
-
-    private static IEnumerator CoBlinkThenExplodeAndHide(UnitMovement u, CursorController cursor, AudioClip explosionClip) // pisca a unidade, toca explosão e some
-    {
-        // garante que a câmera “puxa” pro alvo que vai explodir
-        if (cursor != null)
-        cursor.TeleportToCell(u.currentCell, playSfx: true, adjustCamera: true);
-
-        
-        if (u == null) yield break;
-
-        // pega todos os sprites da unidade (inclui HUD? não; HUD costuma ser UI/Image, então ok)
-        var renderers = u.GetComponentsInChildren<SpriteRenderer>(true);
-        if (renderers == null || renderers.Length == 0)
-        {
-            // sem sprite? só toca e some
-            if (cursor != null && explosionClip != null) cursor.PlaySFX(explosionClip);
-            u.gameObject.SetActive(false);
-            yield break;
-        }
-
-        // piscada acelerando
-        float interval = 0.12f;
-        float minInterval = 0.03f;
-        int blinks = 10;
-
-        bool visible = true;
-        for (int i = 0; i < blinks; i++)
-        {
-            visible = !visible; // alterna
-            for (int r = 0; r < renderers.Length; r++)
-                if (renderers[r] != null) renderers[r].enabled = visible;
-
-            yield return new WaitForSeconds(interval);
-            interval = Mathf.Max(minInterval, interval * 0.80f);
-        }
-
-        // garante que termina INVISÍVEL
-        for (int r = 0; r < renderers.Length; r++)
-            if (renderers[r] != null) renderers[r].enabled = false;
-
-        // toca explosão já "sumido"
-        if (cursor != null && explosionClip != null)
-        {
-            cursor.PlaySFX(explosionClip);
-            yield return new WaitForSeconds(explosionClip.length);
-        }
-        else
-        {
-            yield return new WaitForSeconds(0.35f);
-        }
-
-        u.gameObject.SetActive(false);
-
-    }
 
 
 }

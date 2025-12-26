@@ -170,6 +170,12 @@ public class TurnStateManager : MonoBehaviour
                     break;
                 }
 
+                
+                if (!Combat.EnsureAmmo(unit))
+                {
+                    break;
+                }
+
                 Debug.Log("🔥 Alvo selecionado. ENTER para confirmar ataque, ESC para voltar à lista");
                 PanelConfirmTarget.Instance?.Hide();
                 HideAllSelectTargetPanels();

@@ -11,6 +11,12 @@ public class CursorController : MonoBehaviour
     [Header("Câmera")]
     public CameraController cameraController;
 
+    [Header("Combat SFX/VFX")]
+    public GameObject explosionPrefab;
+    [Header("Combat VFX")]
+    public GameObject projectilePrefab;
+
+
 
     [Header("Audio SFX")]
     public AudioClip sfxCursor;

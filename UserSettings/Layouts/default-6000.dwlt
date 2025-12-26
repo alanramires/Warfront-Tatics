@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 1920
     height: 989
   m_ShowMode: 4
-  m_Title: Game
+  m_Title: Project
   m_RootView: {fileID: 2}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -119,7 +119,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 65
+  controlID: 142
   draggingID: 0
 --- !u!114 &6
 MonoBehaviour:
@@ -423,7 +423,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 20e8ffff24e8ffff2ee8fffffafaffffb8b70000
+      m_ExpandedIDs: ecfaffffc4b7000062b90000
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1064,7 +1064,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Audio/Audio/Tracks
+    - Assets/DB/Armas
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1074,16 +1074,16 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 96
   m_LastFolders:
-  - Assets/Audio/Audio/Tracks
+  - Assets/DB/Armas
   m_LastFoldersGridSize: 96
   m_LastProjectPath: D:\Unity Projects\Warfront-Tatics
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 90be0000
-    m_LastClickedID: 48784
-    m_ExpandedIDs: 00000000d8bd0000dabd0000dcbd0000debd0000e0bd0000e2bd0000e4bd0000
+    m_SelectedIDs: a0a00200
+    m_LastClickedID: 172192
+    m_ExpandedIDs: 0000000008be00000abe00000cbe00000ebe000010be000012be000014be000016be000018be0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1112,7 +1112,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000d8bd0000dabd0000dcbd0000debd0000e0bd0000e2bd0000e4bd0000
+    m_ExpandedIDs: 0000000008be00000abe00000cbe00000ebe000010be000012be000014be000016be000018be0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1191,10 +1191,10 @@ MonoBehaviour:
     m_TextWithWhitespace: "Console\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 1920
-    y: 541
-    width: 1050
-    height: 265
+    x: 0
+    y: 651
+    width: 1399
+    height: 335
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1249,7 +1249,7 @@ MonoBehaviour:
     m_ControlHash: -371814159
     m_PrefName: Preview_InspectorPreview
   m_LastInspectedObjectInstanceID: -1
-  m_LastVerticalScrollValue: 72
+  m_LastVerticalScrollValue: 0
   m_GlobalObjectId: 
   m_InspectorMode: 0
   m_LockTracker:
