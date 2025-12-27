@@ -161,6 +161,9 @@ public static class Combat
             yield break;
         }
 
+        attacker.StopBlinking();
+        defender.StopBlinking();
+
         // 0) Descobre trajetória pela arma 0 (MVP atual)
         var weaponData = (attacker != null && attacker.myWeapons != null && attacker.myWeapons.Count > 0)
             ? attacker.myWeapons[0].data
@@ -326,6 +329,10 @@ public static class Combat
         elimDef = ClampElims(elimDef, atkHP0, defHP0);
         elimAtk = ClampElims(elimAtk, defHP0, atkHP0);
 
+        // Dano bruto (pode ser letal)
+        int damageToDefender = elimDef;
+        int damageToAttacker = elimAtk;
+
         // Consumo de “ataques de esquadrão”:
         // se puxou gatilho, consome 1 mesmo com dano 0
         if (attackerPulledTrigger)
@@ -335,8 +342,8 @@ public static class Combat
             ConsumeAmmoWeapon0(defender);
 
         // Aplica simultâneo (com snapshot)
-        attacker.currentHP = Mathf.Max(0, atkHP0 - elimAtk);
-        defender.currentHP = Mathf.Max(0, defHP0 - elimDef);
+        attacker.currentHP = Mathf.Max(0, atkHP0 - damageToAttacker);
+        defender.currentHP = Mathf.Max(0, defHP0 - damageToDefender);
 
         Debug.Log($"[Combat] dist={dist} diff(QP)={diff} | A elimina {elimDef} (raw {rawA:0.00}) | D elimina {elimAtk} (raw {rawD:0.00}) | revida={defenderPulledTrigger}");
 
@@ -344,12 +351,69 @@ public static class Combat
         bool atkDied = attacker.currentHP <= 0;
         bool defDied = defender.currentHP <= 0;
 
-        if (atkDied)
-            yield return CombatAnimations.CoBlinkThenExplodeAndHide(attacker, attacker.boardCursor, attacker.boardCursor != null ? attacker.boardCursor.sfxExplosion : null);
+        // hit visuals (before death, if any damage) - wait only for flash
+        IEnumerator CoHitFlash(UnitMovement unit, Action onDone)
+        {
+            if (unit != null)
+                yield return CombatAnimations.CoHitFlash(unit, 0.10f, 0.02f);
+            onDone?.Invoke();
+        }
 
-        if (defDied)
-            yield return CombatAnimations.CoBlinkThenExplodeAndHide(defender, attacker.boardCursor, attacker.boardCursor != null ? attacker.boardCursor.sfxExplosion : null);
+        void StartShake(UnitMovement unit, MonoBehaviour runner)
+        {
+            if (unit == null || runner == null) return;
+            runner.StartCoroutine(CombatAnimations.CoShake(unit.transform, 0.10f, 0.025f));
+        }
 
+        MonoBehaviour hitRunner = attacker != null ? attacker : defender;
+        if ((damageToDefender > 0 || damageToAttacker > 0) && hitRunner != null)
+        {
+            bool defDone = !(defender != null && damageToDefender > 0);
+            bool atkDone = !(attacker != null && damageToAttacker > 0);
+
+            if (!defDone)
+            {
+                StartShake(defender, hitRunner);
+                hitRunner.StartCoroutine(CoHitFlash(defender, () => defDone = true));
+            }
+
+            if (!atkDone)
+            {
+                StartShake(attacker, hitRunner);
+                hitRunner.StartCoroutine(CoHitFlash(attacker, () => atkDone = true));
+            }
+
+            if (!defDone || !atkDone)
+                yield return new WaitUntil(() => defDone && atkDone);
+        }
+        else
+        {
+            if (defender != null && damageToDefender > 0)
+            {
+                yield return CombatAnimations.CoHitFlash(defender, 0.10f, 0.02f);
+                yield return CombatAnimations.CoShake(defender.transform, 0.10f, 0.025f);
+            }
+
+            if (attacker != null && damageToAttacker > 0)
+            {
+                yield return CombatAnimations.CoHitFlash(attacker, 0.10f, 0.02f);
+                yield return CombatAnimations.CoShake(attacker.transform, 0.10f, 0.025f);
+            }
+        }
+
+        // animação de morte
+        if (atkDied || defDied)
+        {
+            var deathCursor = attacker != null ? attacker.boardCursor : null;
+            if (deathCursor == null && defender != null)
+                deathCursor = defender.boardCursor;
+
+            if (atkDied)
+                yield return CombatAnimations.CoBlinkThenExplodeAndHideMany(deathCursor, attacker);
+
+            if (defDied)
+                yield return CombatAnimations.CoBlinkThenExplodeAndHideMany(deathCursor, defender);
+        }
 
         // TODO: checkSobreviventes() / animação de morte
         // - quando você fizer animação, aqui vira “toca animação” e depois desativa/destrói.

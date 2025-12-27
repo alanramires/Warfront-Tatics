@@ -33,10 +33,10 @@ public partial class UnitMovement : MonoBehaviour
     public int currentHP;        
     public List<WeaponConfig> myWeapons = new List<WeaponConfig>();
 
-    [Header("Configurações de Time")]
+    [Header("Configuraï¿½ï¿½es de Time")]
     public int teamId = 0; 
 
-    [Header("Referências Gerais")]
+    [Header("Referï¿½ncias Gerais")]
     public CursorController boardCursor; 
     public Tilemap rangeTilemap; 
     public Vector3Int currentCell = new Vector3Int(0, 0, 0); 
@@ -107,7 +107,11 @@ public partial class UnitMovement : MonoBehaviour
 
             if (hud != null)
             {
-                hud.UpdateHP(currentHP);       
+                if (hud != null && data != null)
+                {
+                    hud.UpdateHP(currentHP, data.maxHP);
+                }
+                    
                 hud.SetupWeapons(myWeapons);  
                 hud.SetVisuals(teamId, spriteRenderer.color);  
                 hud.UpdateFuel(currentFuel, data.maxFuel);
@@ -132,7 +136,11 @@ public partial class UnitMovement : MonoBehaviour
         if (hud != null)
         {
             hud.SetLockState(isFinished);
-            hud.UpdateHP(currentHP);      
+            if (hud != null && data != null)
+            {
+                hud.UpdateHP(currentHP, data.maxHP);
+            }
+    
             if (data != null) hud.UpdateFuel(currentFuel, data.maxFuel);
         }
 

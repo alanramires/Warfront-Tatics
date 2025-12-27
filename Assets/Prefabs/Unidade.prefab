@@ -1035,9 +1035,16 @@ MonoBehaviour:
   fuelFillImage: {fileID: 441773505306486226}
   fuelText: {fileID: 2871011952675884067}
   fuelSafeColor: {r: 1, g: 0.6470588, b: 0, a: 1}
+  fuelWarningColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   fuelDangerColor: {r: 1, g: 0, b: 0, a: 1}
   weaponContainer: {fileID: 4509229647997904244}
   weaponSlotPrefab: {fileID: 6164257913965748132, guid: 447bee0129f14774c833d7f0b14b09e8, type: 3}
+  iconHeartImage: {fileID: 6731517863264348587}
+  heartFullSprite: {fileID: 21300000, guid: f57def376d2a5e04c9920b624aa8a7d0, type: 3}
+  heartHalfSprite: {fileID: 21300000, guid: 9c5f4d0b3482e0a4e8a3e550723122a9, type: 3}
+  heartDangerSprite: {fileID: 21300000, guid: 4c29d13173e6e014595c0415e8ece2da, type: 3}
+  halfThreshold: 0.5
+  dangerThreshold: 0.2
 --- !u!1 &4812254377370038319
 GameObject:
   m_ObjectHideFlags: 0
@@ -1693,7 +1700,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -143264595
-  m_SortingLayer: 2
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 7a4e98efb59da8447b1de4d056a57e79, type: 3}
   m_Color: {r: 1, g: 0.9642938, b: 0.5518868, a: 1}

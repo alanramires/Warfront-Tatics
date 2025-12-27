@@ -1,8 +1,19 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class CombatAnimations
 {
+
+    // Struct auxiliar para agrupar info de morte
+    private struct DeathTarget
+    {
+        public UnitMovement u;
+        public Vector3Int cell;
+        public Vector3 worldPos;
+    }
+
+    // Encolhe o transform ate minScale e volta ao normal
     public static IEnumerator CoShrinkWhile(Transform t, float duration, float minScale = 0.25f) // encolhe ate minScale e volta ao normal
     {
         if (t == null || duration <= 0f) yield break;
@@ -123,7 +134,12 @@ public static class CombatAnimations
             for (int r = 0; r < renderers.Length; r++)
                 if (renderers[r] != null) renderers[r].enabled = visible;
 
-            yield return new WaitForSeconds(interval);
+            float wait = 0f;
+            while (wait < interval)
+            {
+                wait += Time.unscaledDeltaTime;
+                yield return null;
+            }
             interval = Mathf.Max(minInterval, interval * 0.80f);
         }
 
@@ -148,11 +164,106 @@ public static class CombatAnimations
         }
 
         // espera o suficiente pra ver/ouvir
-        yield return new WaitForSeconds(Mathf.Max(vfxDur, sfxDur));
+        float finalWait = 0f;
+        float finalDur = Mathf.Max(vfxDur, sfxDur);
+        while (finalWait < finalDur)
+        {
+            finalWait += Time.unscaledDeltaTime;
+            yield return null;
+        }
 
         u.gameObject.SetActive(false);
     }
 
+    // Pisca e explode varios, um por um
+    public static IEnumerator CoBlinkThenExplodeAndHideMany(CursorController cursor, params UnitMovement[] units)
+    {
+        if (units == null || units.Length == 0) yield break;
+
+        // 1) CACHEIA tudo ANTES de desativar qualquer unidade
+        List<DeathTarget> list = new List<DeathTarget>(units.Length);
+        for (int i = 0; i < units.Length; i++)
+        {
+            var u = units[i];
+            if (u == null) continue;
+
+            // Só anima morte se realmente morreu
+            if (u.currentHP > 0) continue;
+
+            list.Add(new DeathTarget
+            {
+                u = u,
+                cell = u.currentCell,
+                worldPos = u.transform.position
+            });
+        }
+
+        // Nada pra fazer
+        if (list.Count == 0) yield break;
+
+        // 2) Executa em sequência (cursor vai pra cada um e resolve)
+        for (int i = 0; i < list.Count; i++)
+        {
+            var t = list[i];
+
+            // pode acontecer de já ter sido desativado por alguma outra lógica
+            if (t.u == null) continue;
+
+            // foco/câmera
+            if (cursor != null)
+                cursor.TeleportToCell(t.cell, playSfx: true, adjustCamera: true);
+
+            // BLINK (sem depender de posição depois)
+            var renderers = t.u.GetComponentsInChildren<SpriteRenderer>(true);
+
+            float interval = 0.12f;
+            float minInterval = 0.03f;
+            int blinks = 10;
+
+            bool visible = true;
+            for (int b = 0; b < blinks; b++)
+            {
+                visible = !visible;
+                for (int r = 0; r < renderers.Length; r++)
+                    if (renderers[r] != null) renderers[r].enabled = visible;
+
+                yield return new WaitForSecondsRealtime(interval);
+                interval = Mathf.Max(minInterval, interval * 0.80f);
+            }
+
+            // termina invisível
+            for (int r = 0; r < renderers.Length; r++)
+                if (renderers[r] != null) renderers[r].enabled = false;
+
+            // VFX + SFX juntos (usa posição cacheada!)
+            float vfxDur = 0.2f;
+            if (cursor != null && cursor.explosionPrefab != null)
+            {
+                var fxGO = UnityEngine.Object.Instantiate(cursor.explosionPrefab, t.worldPos, Quaternion.identity);
+                var fx = fxGO.GetComponent<ExplosionFX>();
+                if (fx != null) vfxDur = Mathf.Max(0.01f, fx.TotalDuration);
+            }
+
+            float sfxDur = 0f;
+            if (cursor != null && cursor.sfxExplosion != null)
+            {
+                cursor.PlaySFX(cursor.sfxExplosion);
+                sfxDur = cursor.sfxExplosion.length;
+            }
+
+            yield return new WaitForSecondsRealtime(Mathf.Max(vfxDur, sfxDur));
+
+            // agora sim desativa a unidade
+            if (t.u != null)
+                t.u.gameObject.SetActive(false);
+
+            // micro pausa pra não “engolir” a próxima
+            yield return new WaitForSecondsRealtime(0.05f);
+        }
+    }
+
+
+    // Dispara projeteis de ambos os lados (se houver)
     public static IEnumerator CoFireProjectiles(
         UnitMovement attacker,
         UnitMovement defender,
@@ -218,4 +329,57 @@ public static class CombatAnimations
 
         yield return new WaitUntil(() => projAtk == null && projDef == null);
     }
+
+    public static IEnumerator CoHitFlash(UnitMovement u, float duration = 0.15f, float interval = 0.03f)
+    {
+        if (u == null) yield break;
+
+        var renderers = u.GetComponentsInChildren<SpriteRenderer>(true);
+        if (renderers == null || renderers.Length == 0) yield break;
+
+        // guarda cores originais
+        var original = new Color[renderers.Length];
+        for (int i = 0; i < renderers.Length; i++)
+            if (renderers[i] != null) original[i] = renderers[i].color;
+
+        float t = 0f;
+        bool on = false;
+        while (t < duration)
+        {
+            on = !on;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+                renderers[i].color = on ? Color.white : new Color(1f, 0.3f, 0.3f, 1f); // branco/vermelho
+            }
+
+            yield return new WaitForSeconds(interval);
+            t += interval;
+        }
+
+        // restaura
+        for (int i = 0; i < renderers.Length; i++)
+            if (renderers[i] != null) renderers[i].color = original[i];
+    }
+
+    public static IEnumerator CoShake(Transform t, float duration = 0.12f, float magnitude = 0.03f)
+    {
+        if (t == null) yield break;
+
+        Vector3 start = t.position;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float x = (Random.value * 2f - 1f) * magnitude;
+            float y = (Random.value * 2f - 1f) * magnitude;
+            t.position = start + new Vector3(x, y, 0f);
+            yield return null;
+        }
+
+        t.position = start;
+    }
+
+
 }

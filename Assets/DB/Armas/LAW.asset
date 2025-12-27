@@ -20,4 +20,4 @@ MonoBehaviour:
   projectileSpeed: 20
   sfxFiring: {fileID: 8300000, guid: 813ce5e455b54764ca7062ed024d25cb, type: 3}
   sfxHit: {fileID: 0}
-  baseAttackPower: 7
+  baseAttackPower: 10

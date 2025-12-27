@@ -111,42 +111,19 @@ public class PanelConfirmTarget : MonoBehaviour
     }
 
     private void FillTargetItem(UnitMovement target)
+{
+    if (spawnedItem == null || target == null) return;
+
+    var ui = spawnedItem.GetComponent<TargetItemUI>();
+    if (ui != null)
     {
-        if (spawnedItem == null || target == null) return;
-
-        // pega a PRIMEIRA Image filha (exceto a que estiver no proprio root do item, se existir)
-        Image img = null;
-        var images = spawnedItem.GetComponentsInChildren<Image>(true);
-        foreach (var im in images)
-        {
-            if (im.gameObject == spawnedItem) continue;
-            img = im;
-            break;
-        }
-
-        // pega o PRIMEIRO TMP filho
-        TextMeshProUGUI txt = null;
-        var tmps = spawnedItem.GetComponentsInChildren<TextMeshProUGUI>(true);
-        if (tmps != null && tmps.Length > 0) txt = tmps[0];
-
-        // sprite
-        if (img != null)
-        {
-            if (TargetUiUtils.TryGetSprite(target, out var sprite, out var color, true))
-            {
-                img.sprite = sprite;
-                img.color = color;
-            }
-        }
-
-        // texto + cor
-        if (txt != null)
-        {
-            string unitName = TargetUiUtils.GetUnitDisplayName(target, target != null ? target.name : "Alvo");
-            string cellLabel = TargetUiUtils.GetCellLabel(target);
-
-            txt.text = $"{unitName} ({cellLabel})";
-            txt.color = TeamUtils.GetColor(target != null ? target.teamId : 0);
-        }
+        // index 0 => ENTER (confirm)
+        ui.Bind(currentAttacker, target, 0);
     }
+    else
+    {
+        Debug.LogWarning($"[PanelConfirmTarget] Spawned item sem TargetItemUI: {spawnedItem.name}");
+    }
+}
+
 }

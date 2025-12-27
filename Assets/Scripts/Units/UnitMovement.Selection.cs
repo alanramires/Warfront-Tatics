@@ -58,12 +58,17 @@ public partial class UnitMovement : MonoBehaviour
     public void DeselectUnit()
     {
         ClearVisuals();
+        StopBlinking();
+        if (boardCursor) boardCursor.ClearSelection();
+    }
+
+    public void StopBlinking()
+    {
         if (blinkRoutine != null)
         {
             StopCoroutine(blinkRoutine);
             blinkRoutine = null;
         }
         if (spriteRenderer) spriteRenderer.color = originalColor;
-        if (boardCursor) boardCursor.ClearSelection();
     }
 }

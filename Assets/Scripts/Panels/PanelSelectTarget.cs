@@ -197,21 +197,17 @@ public class PanelSelectTarget : MonoBehaviour
             Transform textTr = go.transform.Find("Text");
             if (textTr != null) txt = textTr.GetComponent<TextMeshProUGUI>();
 
-            // Icon: tenta puxar sprite do SpriteRenderer do alvo
-            if (icon != null)
+            // NOVO: deixa o próprio prefab se preencher
+            var ui = go.GetComponent<TargetItemUI>();
+            if (ui != null)
             {
-                if (TargetUiUtils.TryGetSprite(t, out var sprite, out var color, false))
-                {
-                    icon.sprite = sprite;
-                    icon.enabled = true;
-                    icon.preserveAspect = true;
-                    icon.color = color;
-                }
-                else
-                {
-                    icon.enabled = false;
-                }
+                ui.Bind(attacker, t, i); // i=0 -> ENTER, i=1.. -> [1],[2]...
             }
+            else
+            {
+                Debug.LogWarning($"[PanelSelectTarget] TargetItem sem TargetItemUI: {go.name}");
+            }
+
 
             // Texto: "[ENTER] Apache (0,16)" ou "[1] ... "
             if (txt != null)
@@ -224,6 +220,8 @@ public class PanelSelectTarget : MonoBehaviour
                 txt.text = $"[{hotkey}] {unitName} \n ({cellLabel})";
                 txt.color = TeamUtils.GetColor(attacker != null ? attacker.teamId : 0);
             }
+
+            
         }
     }
 

@@ -27,6 +27,33 @@ public class UnitHUD : MonoBehaviour
     public Transform weaponContainer;    
     public GameObject weaponSlotPrefab;  
 
+
+    [Header("Heart Icon")]
+    public Image iconHeartImage;
+    public Sprite heartFullSprite;
+    public Sprite heartHalfSprite;
+    public Sprite heartDangerSprite; // 20% ou menos
+
+    [Range(0f, 1f)] public float halfThreshold = 0.5f;   // 50%
+    [Range(0f, 1f)] public float dangerThreshold = 0.2f; // 20%
+
+    public void UpdateHP(int currentHP, int maxHP)
+    {
+        if (hpText != null)
+            hpText.text = currentHP.ToString();
+
+        if (iconHeartImage == null || maxHP <= 0) return;
+
+        float pct = (float)currentHP / maxHP;
+
+        if (pct <= dangerThreshold && heartDangerSprite != null)
+            iconHeartImage.sprite = heartDangerSprite;
+        else if (pct <= halfThreshold && heartHalfSprite != null)
+            iconHeartImage.sprite = heartHalfSprite;
+        else if (heartFullSprite != null)
+            iconHeartImage.sprite = heartFullSprite;
+    }
+
     // --- ATUALIZA A BARRA DE AUTONOMIA ---
     public void UpdateFuel(int current, int max)
     {

@@ -182,18 +182,38 @@ public class TurnStateManager : MonoBehaviour
                 HideAllPathLines();
 
                 SetState(TurnState.Attacking);                
+                unit?.StopBlinking();
+                selectedTarget?.StopBlinking();
+                PathPreviewLine.Instance?.Hide();
 
-                StartCoroutine(Combat.ResolveAttackWeapon0_MVP(
-                    unit,
-                    selectedTarget, // usa o seu campo já existente
-                    onDone: () =>
-                    {
-                        // Se quiser: se faltou munição, você pode voltar pra ConfirmTarget/Aiming aqui.
-                        // No MVP eu encerraria o turno só quando realmente atacou.
-                        unit.FinishTurn();
-                        SetState(TurnState.Finished);
-                    }
-                ));
+                if (unit != null && unit.boardCursor != null)
+                {
+                    unit.boardCursor.StartCoroutine(Combat.ResolveAttackWeapon0_MVP(
+                        unit,
+                        selectedTarget, // usa o seu campo já existente
+                        onDone: () =>
+                        {
+                            // Se quiser: se faltou munição, você pode voltar pra ConfirmTarget/Aiming aqui.
+                            // No MVP eu encerraria o turno só quando realmente atacou.
+                            unit.FinishTurn();
+                            SetState(TurnState.Finished);
+                        }
+                    ));
+                }
+                else
+                {
+                    StartCoroutine(Combat.ResolveAttackWeapon0_MVP(
+                        unit,
+                        selectedTarget, // usa o seu campo já existente
+                        onDone: () =>
+                        {
+                            // Se quiser: se faltou munição, você pode voltar pra ConfirmTarget/Aiming aqui.
+                            // No MVP eu encerraria o turno só quando realmente atacou.
+                            unit.FinishTurn();
+                            SetState(TurnState.Finished);
+                        }
+                    ));
+                }
                 break;
 
            
